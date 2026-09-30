@@ -1,4 +1,4 @@
-const VERSION = "megaapp-shell-v3";
+const VERSION = "megaapp-shell-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -12,6 +12,8 @@ const ASSETS = [
   "./src/canvas.js",
   "./src/marble.js",
   "./src/marble-physics.js",
+  "./src/platformer.js",
+  "./src/platformer-engine.js",
   "./src/state.js",
   "./src/capabilities.js",
   "./src/probes.js",
@@ -37,16 +39,18 @@ self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") self.skipWaiting();
 });
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET" || !urls.has(event.request.url)) return;
+  const requestUrl = new URL(event.request.url);
+  requestUrl.hash = "";
+  if (event.request.method !== "GET" || !urls.has(requestUrl.href)) return;
   event.respondWith(
     (async () => {
       const cache = await caches.open(VERSION);
       try {
         const response = await fetch(event.request);
-        if (response.ok) await cache.put(event.request, response.clone());
+        if (response.ok) await cache.put(requestUrl.href, response.clone());
         return response;
       } catch {
-        const saved = await cache.match(event.request);
+        const saved = await cache.match(requestUrl.href);
         if (saved) return saved;
         return new Response(
           "Open MegaApp online once to prepare offline use.",

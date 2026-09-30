@@ -48,6 +48,22 @@
         </button>
         <button
           class="dock-button"
+          id="tab-jump"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-jump"
+          tabindex="-1"
+          data-panel="jump"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M3 20h6m6 0h6M7 14l4-7 4 4 3-1M11 7l-1-3m1 3 4-2M11 13l-1 5m3-5 3 5"
+            />
+            <circle cx="15" cy="3" r="1.5" /></svg
+          ><span>Jump</span>
+        </button>
+        <button
+          class="dock-button"
           id="tab-canvas"
           role="tab"
           aria-selected="false"
@@ -224,6 +240,98 @@
               <span><output id="marble-ball-count">0</output> marbles</span
               ><span><output id="marble-hit-count">0</output> notes</span>
             </div>
+          </footer>
+        </section>
+        <section
+          id="panel-jump"
+          class="panel platformer-panel"
+          role="tabpanel"
+          aria-labelledby="tab-jump"
+          hidden
+        >
+          <div class="panel-heading platformer-heading">
+            <div>
+              <h1>Pocket Jump</h1>
+              <p>Run, jump, grab coins. Reach the flag.</p>
+            </div>
+            <div class="platformer-actions">
+              <button
+                id="platformer-sound"
+                class="quiet-button"
+                aria-pressed="true"
+              >
+                Sound on
+              </button>
+              <button id="platformer-restart" class="quiet-button">
+                Restart
+              </button>
+              <button id="platformer-play" class="primary-button">Start</button>
+            </div>
+          </div>
+          <div class="platformer-machine">
+            <div class="platformer-hud" aria-label="Game score">
+              <span>Score <output id="platformer-score">0</output></span>
+              <span>Coins <output id="platformer-coins">0</output></span>
+              <span>Lives <output id="platformer-lives">3</output></span>
+            </div>
+            <div id="platformer-stage" class="platformer-stage">
+              <canvas
+                id="platformer-canvas"
+                tabindex="0"
+                aria-label="Pocket Jump game. Use left and right arrows or A and D to move. Space, up arrow, or W to jump. On a touchscreen use the move and Jump buttons below."
+                aria-describedby="platformer-status"
+              ></canvas>
+              <div id="platformer-overlay" class="platformer-overlay">
+                <div class="platformer-prompt">
+                  <h2 id="platformer-overlay-title">A little adventure.</h2>
+                  <p id="platformer-overlay-text">
+                    Jump over gaps and stomp the blobs. Three lives, one flag.
+                  </p>
+                  <button id="platformer-action" class="primary-button">
+                    Start
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="platformer-controls" aria-label="Touch game controls">
+              <div class="platformer-directions">
+                <button
+                  id="platformer-left"
+                  class="platformer-pad"
+                  aria-label="Move left"
+                  aria-pressed="false"
+                >
+                  <span aria-hidden="true">←</span>
+                </button>
+                <button
+                  id="platformer-right"
+                  class="platformer-pad"
+                  aria-label="Move right"
+                  aria-pressed="false"
+                >
+                  <span aria-hidden="true">→</span>
+                </button>
+              </div>
+              <span class="platformer-touch-hint"
+                >Hold to move. Tap to jump.</span
+              >
+              <button
+                id="platformer-jump"
+                class="platformer-pad platformer-jump"
+                aria-label="Jump"
+                aria-pressed="false"
+              >
+                Jump <span aria-hidden="true">↑</span>
+              </button>
+            </div>
+          </div>
+          <footer class="platformer-footer">
+            <span id="platformer-status" role="status"
+              >Your adventure is ready.</span
+            >
+            <span class="platformer-keyboard-hint"
+              >Keyboard: ← → or A D · Space to jump</span
+            >
           </footer>
         </section>
         <section

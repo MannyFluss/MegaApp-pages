@@ -1,5 +1,6 @@
 import { createCanvas } from "./canvas.js";
 import { createMarbleMusic } from "./marble.js";
+import { createPlatformer } from "./platformer.js";
 import { validateScene } from "./marble-physics.js";
 import {
   createSampleStore,
@@ -79,9 +80,11 @@ const marble = createMarbleMusic({
     renderState();
   },
 });
+const platformer = createPlatformer({ notify });
+platformer.setVisible(false);
 const tabs = [...document.querySelectorAll("[data-panel]")];
 const results = new Map();
-function selectTab(tab) {
+function selectTab(tab, { route = true } = {}) {
   for (const t of tabs) {
     const active = t === tab;
     t.setAttribute("aria-selected", String(active));
@@ -91,8 +94,20 @@ function selectTab(tab) {
   }
   if (tab.dataset.panel === "canvas") drawing.resize();
   marble.setVisible(tab.dataset.panel === "marble");
+  platformer.setVisible(tab.dataset.panel === "jump");
   if (tab.dataset.panel === "device") renderDevice();
+  if (route)
+    history.replaceState(
+      null,
+      "",
+      `${location.pathname}${location.search}#${tab.dataset.panel}`,
+    );
 }
+function selectFromHash() {
+  const tab = tabs.find((value) => `#${value.dataset.panel}` === location.hash);
+  selectTab(tab || $("tab-marble"), { route: false });
+}
+window.addEventListener("hashchange", selectFromHash);
 const openState = () => selectTab($("tab-state"));
 const probes = createProbes({
   drawing,
@@ -161,6 +176,7 @@ function applyPreferences() {
   drawing.applySettings(values);
   drawing.redraw();
   marble.redraw();
+  platformer.redraw();
 }
 colorScheme.addEventListener("change", applyPreferences);
 $("theme-toggle").onclick = async () => {
@@ -338,6 +354,7 @@ storeReady
   })
   .catch((e) => notify(`Sample storage could not open: ${e.message}`));
 renderDevice();
+selectFromHash();
 if ("serviceWorker" in navigator && isSecureContext) {
   navigator.serviceWorker
     .register("./sw.js")
