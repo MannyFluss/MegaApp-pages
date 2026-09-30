@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#3558f5" />
+    <meta
+      name="description"
+      content="A personal creative playground for iPad, Pencil, and the web."
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>MegaApp — Playground</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="MegaApp home"
+          ><span class="brand-mark" aria-hidden="true">m</span
+          ><span>MegaApp</span><span class="edition">Playground</span></a
+        >
+        <div class="topbar-actions">
+          <span id="connection-status" class="connection">Online</span
+          ><button id="install-help" class="quiet-button">Add to iPad</button>
+        </div>
+      </header>
+      <nav class="dock" aria-label="Playground" role="tablist">
+        <button
+          class="dock-button selected"
+          id="tab-marble"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-marble"
+          data-panel="marble"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="8" cy="7" r="3" />
+            <circle cx="17" cy="13" r="2" />
+            <path d="m3 14 10 5 8-4" /></svg
+          ><span>Marbles</span>
+        </button>
+        <button
+          class="dock-button"
+          id="tab-canvas"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-canvas"
+          tabindex="-1"
+          data-panel="canvas"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m5 17 12-12 3 3-12 12-4 1Z M14 8l3 3" /></svg
+          ><span>Canvas</span>
+        </button>
+        <button
+          class="dock-button"
+          id="tab-device"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-device"
+          tabindex="-1"
+          data-panel="device"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="6" y="3" width="12" height="18" rx="3" />
+            <path d="M10 17h4" /></svg
+          ><span>Device</span>
+        </button>
+        <button
+          class="dock-button"
+          id="tab-state"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-state"
+          tabindex="-1"
+          data-panel="state"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 3 9 5-9 5-9-5Z m-9 9 9 5 9-5 M3 16l9 5 9-5" /></svg
+          ><span>State</span>
+        </button>
+        <span class="dock-spacer"></span
+        ><button
+          id="theme-toggle"
+          class="dock-button"
+          aria-label="Switch color theme"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 14A8 8 0 0 1 10 5a8 8 0 1 0 9 9Z" /></svg
+          ><span>Theme</span>
+        </button>
+      </nav>
+      <main>
+        <section
+          id="panel-marble"
+          class="panel marble-panel"
+          role="tabpanel"
+          aria-labelledby="tab-marble"
+        >
+          <div class="panel-heading marble-heading">
+            <div>
+              <h1>Marble Music</h1>
+              <p>Draw a line. Let a little melody fall.</p>
+            </div>
+            <button
+              id="marble-play"
+              class="primary-button marble-play"
+              aria-pressed="false"
+              disabled
+            >
+              Play
+            </button>
+          </div>
+          <div class="marble-toolbar" aria-label="Marble tools">
+            <div class="segmented">
+              <button id="marble-tool-draw" class="active" aria-pressed="true">
+                Draw rails
+              </button>
+              <button id="marble-tool-drop" aria-pressed="false">
+                Drop marbles
+              </button>
+            </div>
+            <label class="marble-note-control"
+              >Next rail
+              <select id="marble-note">
+                <option value="0">C4</option>
+                <option value="1">D4</option>
+                <option value="2">E4</option>
+                <option value="3">G4</option>
+                <option value="4">A4</option>
+                <option value="5">C5</option>
+                <option value="6">D5</option>
+                <option value="7">E5</option>
+              </select>
+            </label>
+            <div class="toolbar-spacer"></div>
+            <button id="marble-undo" class="quiet-button" disabled>Undo</button>
+            <button id="marble-clear" class="quiet-button">Clear</button>
+          </div>
+          <div class="marble-workspace">
+            <div id="marble-stage" class="marble-stage">
+              <canvas
+                id="marble-canvas"
+                tabindex="0"
+                aria-label="Marble Music board. Draw rails or drop marbles with Pencil, touch, or mouse. Use the controls to play. Keyboard: Space to play or pause, Command Z to undo."
+              ></canvas>
+            </div>
+            <aside class="marble-instrument" aria-label="Instrument controls">
+              <div class="marble-control-title">
+                <h2>A tiny instrument</h2>
+                <span class="marble-note-symbol" aria-hidden="true">♫</span>
+              </div>
+              <button
+                id="marble-sound"
+                class="quiet-button marble-sound"
+                aria-pressed="true"
+              >
+                Sound on
+              </button>
+              <label class="marble-slider"
+                >Gravity
+                <output id="marble-gravity-value" for="marble-gravity"
+                  >600</output
+                >
+                <input
+                  id="marble-gravity"
+                  type="range"
+                  min="100"
+                  max="1200"
+                  step="25"
+                  value="600"
+                />
+              </label>
+              <label class="marble-slider"
+                >Volume
+                <output id="marble-volume-value" for="marble-volume"
+                  >35%</output
+                >
+                <input
+                  id="marble-volume"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.35"
+                />
+              </label>
+              <p id="marble-instruction" class="marble-instruction">
+                Draw musical rails, then press Play. Choose Drop marbles to add
+                your own.
+              </p>
+              <div class="marble-scene-actions">
+                <button id="marble-reset" class="quiet-button">Restart</button>
+                <button id="marble-demo" class="quiet-button">Load demo</button>
+              </div>
+              <div class="marble-file-actions">
+                <button id="marble-export" class="quiet-button">
+                  Save scene
+                </button>
+                <button id="marble-import" class="quiet-button">
+                  Open scene
+                </button>
+                <input
+                  id="marble-file"
+                  type="file"
+                  accept="application/json,.json"
+                  hidden
+                />
+              </div>
+            </aside>
+          </div>
+          <footer class="marble-footer">
+            <span id="marble-status" role="status"
+              >Getting the marbles ready…</span
+            >
+            <div class="marble-counters">
+              <span><output id="marble-ball-count">0</output> marbles</span
+              ><span><output id="marble-hit-count">0</output> notes</span>
+            </div>
+          </footer>
+        </section>
+        <section
+          id="panel-canvas"
+          class="panel canvas-panel"
+          role="tabpanel"
+          aria-labelledby="tab-canvas"
+          hidden
+        >
+          <div class="panel-heading">
+            <div>
+              <h1>A little room to make things.</h1>
+              <p>Pencil, finger, mouse. Try a mark.</p>
+            </div>
+            <button id="canvas-fullscreen" class="quiet-button">
+              Fullscreen
+            </button>
+          </div>
+          <div class="canvas-toolbar" aria-label="Drawing controls">
+            <div class="segmented">
+              <button id="tool-draw" class="active" aria-pressed="true">
+                Draw</button
+              ><button id="tool-erase" aria-pressed="false">Erase</button>
+            </div>
+            <label class="color-control"
+              >Ink <input type="color" id="ink-color" value="#3558f5"
+            /></label>
+            <label class="width-control"
+              >Size
+              <input
+                type="range"
+                id="brush-size"
+                min="1"
+                max="48"
+                value="8"
+              /><output id="brush-value" for="brush-size">8</output></label
+            >
+            <label class="toggle-control"
+              ><input type="checkbox" id="pressure-toggle" checked />
+              Pressure</label
+            >
+            <label class="toggle-control"
+              ><input type="checkbox" id="pen-only" /> Pencil only</label
+            >
+            <div class="toolbar-spacer"></div>
+            <button id="undo" class="quiet-button" disabled>Undo</button
+            ><button id="redo" class="quiet-button" disabled>Redo</button
+            ><button id="clear-canvas" class="quiet-button">Clear</button>
+          </div>
+          <div class="canvas-workspace">
+            <div class="canvas-stage" id="canvas-stage">
+              <canvas
+                id="drawing-canvas"
+                aria-label="Drawing canvas. Use Pencil, touch, or mouse. Keyboard shortcuts: Command Z to undo; plus and minus to zoom."
+                tabindex="0"
+              ></canvas>
+              <div class="canvas-welcome" id="canvas-welcome">
+                <span class="welcome-spark" aria-hidden="true">✳</span
+                ><strong>Hey. What happens if…</strong
+                ><span>Make a mark and find out.</span>
+              </div>
+              <div class="zoom-controls">
+                <button id="zoom-out" aria-label="Zoom out">−</button
+                ><output id="zoom-value">100%</output
+                ><button id="zoom-in" aria-label="Zoom in">+</button
+                ><button id="zoom-fit">Fit</button>
+              </div>
+            </div>
+            <aside class="input-rack" aria-label="Live input">
+              <div class="rack-heading">
+                <h2>Under your fingertips</h2>
+                <span id="pointer-type" class="small-badge">Waiting</span>
+              </div>
+              <div class="pressure-meter">
+                <span>Pressure</span><strong id="pressure-value">0.00</strong>
+                <div class="meter-track"><span id="pressure-fill"></span></div>
+              </div>
+              <dl class="telemetry">
+                <div>
+                  <dt>Position</dt>
+                  <dd id="pointer-position">—</dd>
+                </div>
+                <div>
+                  <dt>Tilt</dt>
+                  <dd id="pointer-tilt">—</dd>
+                </div>
+                <div>
+                  <dt>Altitude</dt>
+                  <dd id="pointer-altitude">—</dd>
+                </div>
+                <div>
+                  <dt>Azimuth</dt>
+                  <dd id="pointer-azimuth">—</dd>
+                </div>
+                <div>
+                  <dt>Twist</dt>
+                  <dd id="pointer-twist">—</dd>
+                </div>
+                <div>
+                  <dt>Contact</dt>
+                  <dd id="pointer-contact">—</dd>
+                </div>
+                <div>
+                  <dt>Samples</dt>
+                  <dd id="pointer-samples">—</dd>
+                </div>
+                <div>
+                  <dt>Prediction</dt>
+                  <dd id="pointer-prediction">—</dd>
+                </div>
+                <div>
+                  <dt>Display</dt>
+                  <dd id="display-density">—</dd>
+                </div>
+              </dl>
+              <p class="rack-note">
+                Two fingers to pan and zoom. Predicted marks are a preview; only
+                actual input is saved to your export.
+              </p>
+              <div class="export-actions">
+                <button id="export-png" class="primary-button">
+                  Save image</button
+                ><button id="export-svg" class="quiet-button">Save SVG</button
+                ><button id="share-canvas" class="quiet-button">Share</button>
+              </div>
+            </aside>
+          </div>
+          <footer class="canvas-footer">
+            <span id="canvas-summary">Your canvas is ready.</span
+            ><span>960 × 640</span>
+          </footer>
+        </section>
+        <section
+          id="panel-device"
+          class="panel document-panel"
+          role="tabpanel"
+          aria-labelledby="tab-device"
+          hidden
+        >
+          <div class="panel-heading">
+            <div>
+              <h1>What can this device do?</h1>
+              <p>Live checks for the browser you’re using.</p>
+            </div>
+            <button id="refresh-capabilities" class="quiet-button">
+              Refresh
+            </button>
+          </div>
+          <div id="device-summary" class="device-summary"></div>
+          <div class="capability-filters">
+            <label
+              >Find a capability
+              <input
+                id="capability-search"
+                type="search"
+                placeholder="Pencil, audio, files…" /></label
+            ><label
+              >Show
+              <select id="capability-filter">
+                <option value="all">Everything</option>
+                <option value="available">API exposed</option>
+                <option value="unavailable">Not exposed</option>
+              </select></label
+            >
+          </div>
+          <div id="capability-list"></div>
+          <div
+            id="probe-output"
+            class="probe-output"
+            aria-live="polite"
+            hidden
+          ></div>
+        </section>
+        <section
+          id="panel-state"
+          class="panel document-panel"
+          role="tabpanel"
+          aria-labelledby="tab-state"
+          hidden
+        >
+          <div class="panel-heading">
+            <div>
+              <h1>A few things to remember.</h1>
+              <p>
+                A small persistence experiment. Come back and your values will
+                still be here.
+              </p>
+            </div>
+            <span id="storage-status" class="small-badge">Loading</span>
+          </div>
+          <div class="state-actions">
+            <button id="export-state" class="primary-button">
+              Export sample</button
+            ><button id="import-state" class="quiet-button">
+              Import sample</button
+            ><input
+              id="state-file"
+              type="file"
+              accept="application/json,.json"
+              hidden
+            /><button id="reset-state" class="quiet-button">
+              Reset sample
+            </button>
+          </div>
+          <form id="variable-form" class="variable-form">
+            <label
+              >Name
+              <input
+                id="variable-name"
+                required
+                placeholder="apps.demo.tempo"
+                autocomplete="off"
+                maxlength="100" /></label
+            ><label
+              >Type
+              <select id="variable-type">
+                <option>string</option>
+                <option>number</option>
+                <option>boolean</option>
+                <option>object</option>
+                <option>array</option>
+                <option>null</option>
+              </select></label
+            ><label class="value-label"
+              >Value
+              <input id="variable-value" value="" autocomplete="off" /></label
+            ><button class="primary-button" type="submit">Save value</button>
+            <p id="variable-error" class="form-error" role="alert" hidden></p>
+          </form>
+          <div id="variable-list" class="variable-list"></div>
+          <p class="state-note">
+            These are sample values for this device, not a credential store.
+            Export a copy to move or back them up. Production state and cloud
+            sync come later.
+          </p>
+        </section>
+      </main>
+    </div>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <dialog id="install-dialog">
+      <form method="dialog">
+        <button class="dialog-close quiet-button" aria-label="Close">
+          Close
+        </button>
+      </form>
+      <h2>Make a little home for it.</h2>
+      <p>
+        In Safari or Chrome on iPad, open the Share menu and choose
+        <strong>Add to Home Screen</strong>. Enable
+        <strong>Open as Web App</strong> if offered.
+      </p>
+      <p>After the first connected visit, the playground can open offline.</p>
+      <p>
+        Each browser and the Home Screen app keep separate local values. Export
+        and import a sample snapshot to move them between contexts.
+      </p>
+    </dialog>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
