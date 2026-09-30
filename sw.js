@@ -1,4 +1,4 @@
-const VERSION = "megaapp-shell-v4";
+const VERSION = "megaapp-shell-v5";
 const ASSETS = [
   "./",
   "./index.html",
@@ -22,8 +22,17 @@ const ASSETS = [
   "./src/webmcp.js",
 ];
 const urls = new Set(ASSETS.map((p) => new URL(p, self.location).href));
+// A new shell must not inherit still-fresh HTTP responses from the old app.
 self.addEventListener("install", (event) =>
-  event.waitUntil(caches.open(VERSION).then((cache) => cache.addAll(ASSETS))),
+  event.waitUntil(
+    caches
+      .open(VERSION)
+      .then((cache) =>
+        cache.addAll(
+          [...urls].map((url) => new Request(url, { cache: "reload" })),
+        ),
+      ),
+  ),
 );
 self.addEventListener("activate", (event) =>
   event.waitUntil(
@@ -46,7 +55,8 @@ self.addEventListener("fetch", (event) => {
     (async () => {
       const cache = await caches.open(VERSION);
       try {
-        const response = await fetch(event.request);
+        // Revalidate online assets; the shell cache still handles offline use.
+        const response = await fetch(event.request, { cache: "no-cache" });
         if (response.ok) await cache.put(requestUrl.href, response.clone());
         return response;
       } catch {
