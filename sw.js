@@ -1,4 +1,4 @@
-const VERSION = "megaapp-shell-v6";
+const VERSION = "megaapp-shell-v7";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,7 @@ const ASSETS = [
   "./icons/icon-512.png",
   "./icons/apple-touch-icon.png",
   "./src/app.js",
+  "./src/intro.js",
   "./src/canvas.js",
   "./src/marble.js",
   "./src/marble-physics.js",

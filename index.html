@@ -595,13 +595,16 @@
               <h1>Design reading</h1>
               <p>Care &amp; consequence: our interactive Jony Ive study.</p>
             </div>
-            <a
-              class="quiet-button design-open"
-              href="./reading/care-and-consequence.html"
-              target="_blank"
-              rel="noopener"
-              >Open full page</a
-            >
+            <div class="design-reading-actions">
+              <button id="intro-replay" class="quiet-button">Try intro</button>
+              <a
+                class="quiet-button design-open"
+                href="./reading/care-and-consequence.html"
+                target="_blank"
+                rel="noopener"
+                >Open full page</a
+              >
+            </div>
           </div>
           <iframe
             id="design-reader"
@@ -612,6 +615,42 @@
           ></iframe>
         </section>
       </main>
+    </div>
+    <div
+      id="workspace-intro"
+      class="workspace-intro"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="intro-title"
+      tabindex="-1"
+      hidden
+    >
+      <div class="intro-topline">
+        <span class="intro-brand">MegaApp</span>
+        <button id="intro-skip" class="intro-skip">Skip intro</button>
+      </div>
+      <div class="intro-composition">
+        <div class="intro-copy">
+          <h1 id="intro-title">Your<br />workspace.</h1>
+          <p>Draw, make music, play.</p>
+        </div>
+        <canvas
+          id="intro-art"
+          class="intro-art"
+          role="img"
+          aria-label="An original ASCII computer with a luminous M on its screen"
+        ></canvas>
+      </div>
+      <div class="intro-entry">
+        <button id="intro-enter" class="intro-enter">
+          Enter workspace <span aria-hidden="true">↗</span>
+        </button>
+        <span class="intro-swipe"
+          ><span aria-hidden="true">←</span> Swipe left to enter</span
+        >
+      </div>
+      <p class="intro-tools">Marbles / Canvas / Jump / Design</p>
+      <div class="intro-blade" aria-hidden="true"></div>
     </div>
     <div id="toast" class="toast" role="status" hidden></div>
     <dialog id="install-dialog">

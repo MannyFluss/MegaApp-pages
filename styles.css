@@ -1426,3 +1426,235 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+/* The intro is an original, temporary surface over the real workspace. */
+.design-reading-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+body.intro-open {
+  overflow: hidden;
+}
+.workspace-intro {
+  --intro-progress: 0;
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  padding: max(28px, env(safe-area-inset-top))
+    max(42px, env(safe-area-inset-right)) max(26px, env(safe-area-inset-bottom))
+    max(42px, env(safe-area-inset-left));
+  background: #243bf2;
+  color: #fffbed;
+  overflow: hidden;
+  isolation: isolate;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform;
+}
+.intro-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+.intro-brand {
+  font-size: 1.2rem;
+  font-weight: 750;
+  letter-spacing: -0.04em;
+}
+.intro-skip {
+  min-height: 44px;
+  padding: 10px 0 10px 18px;
+  color: #fffbed;
+  background: transparent;
+  border-radius: 0;
+  font:
+    0.8rem ui-monospace,
+    Menlo,
+    monospace;
+}
+.intro-composition {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+  gap: 14px;
+}
+.intro-copy {
+  position: relative;
+  z-index: 1;
+}
+.intro-copy h1 {
+  font-family: Impact, "Arial Narrow", "Helvetica Neue", sans-serif;
+  text-transform: uppercase;
+  font-size: clamp(4rem, 10vw, 10rem);
+  line-height: 0.88;
+  font-weight: 900;
+  letter-spacing: -0.045em;
+}
+.intro-copy p {
+  margin-top: 25px;
+  font:
+    1rem ui-monospace,
+    Menlo,
+    monospace;
+  color: #fffbed;
+}
+.intro-art {
+  display: block;
+  width: 100%;
+  height: min(55dvh, 550px);
+  min-width: 0;
+}
+.intro-entry {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+}
+.intro-enter {
+  display: flex;
+  justify-content: space-between;
+  gap: 55px;
+  align-items: center;
+  min-height: 68px;
+  padding: 18px 26px;
+  border-radius: 0;
+  background: #fffbed;
+  color: #1427ba;
+  font-size: 1.075rem;
+  font-weight: 650;
+}
+.intro-enter span {
+  font-size: 1.9rem;
+  font-weight: 400;
+  line-height: 1;
+}
+.intro-swipe {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font:
+    0.8rem ui-monospace,
+    Menlo,
+    monospace;
+}
+.intro-swipe > span {
+  font-family: sans-serif;
+  font-size: 2rem;
+}
+.intro-tools {
+  margin-top: 24px;
+  color: #b7c4ff;
+  font:
+    0.75rem ui-monospace,
+    Menlo,
+    monospace;
+}
+.workspace-intro button:focus-visible {
+  outline: 3px solid #fffbed;
+  outline-offset: 6px;
+}
+.intro-enter:focus-visible {
+  outline-offset: 6px;
+}
+.intro-blade {
+  position: absolute;
+  right: -4vw;
+  top: -10%;
+  height: 120%;
+  width: 8vw;
+  background: #fffbed;
+  transform: skewX(-10deg) scaleX(var(--intro-progress));
+  transform-origin: right;
+  pointer-events: none;
+  box-shadow:
+    -18px 0 0 rgb(255 251 237 / 0.13),
+    -38px 0 0 rgb(255 251 237 / 0.06);
+}
+@media (min-width: 1500px) {
+  .workspace-intro {
+    padding-left: 7vw;
+    padding-right: 7vw;
+  }
+}
+@media (max-width: 760px) {
+  .workspace-intro {
+    padding: max(16px, env(safe-area-inset-top)) 22px
+      max(22px, env(safe-area-inset-bottom));
+  }
+  .intro-composition {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0;
+    padding-top: 22px;
+  }
+  .intro-copy h1 {
+    font-size: clamp(3.4rem, 14vw, 6rem);
+  }
+  .intro-copy p {
+    font-size: 0.8rem;
+    margin-top: 16px;
+  }
+  .intro-art {
+    height: 100%;
+    min-height: 180px;
+    max-height: 45dvh;
+  }
+  .intro-entry {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .intro-enter {
+    width: 100%;
+    min-height: 58px;
+  }
+  .intro-swipe {
+    font-size: 0.75rem;
+    gap: 9px;
+  }
+  .intro-swipe > span {
+    font-size: 1.5rem;
+  }
+  .intro-tools {
+    font-size: 0.625rem;
+    margin-top: 14px;
+  }
+}
+@media (max-height: 540px) and (min-width: 600px) {
+  .workspace-intro {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  .intro-copy h1 {
+    font-size: clamp(3rem, 8vw, 6rem);
+  }
+  .intro-copy p {
+    margin-top: 12px;
+    font-size: 0.8rem;
+  }
+  .intro-art {
+    height: 55dvh;
+  }
+  .intro-enter {
+    min-height: 48px;
+    padding: 10px 20px;
+  }
+  .intro-tools {
+    margin-top: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-blade {
+    display: none;
+  }
+}

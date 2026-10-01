@@ -1,6 +1,7 @@
 import { createCanvas } from "./canvas.js";
 import { createMarbleMusic } from "./marble.js";
 import { createPlatformer } from "./platformer.js";
+import { createIntro } from "./intro.js";
 import { validateScene } from "./marble-physics.js";
 import {
   createSampleStore,
@@ -355,6 +356,7 @@ storeReady
   .catch((e) => notify(`Sample storage could not open: ${e.message}`));
 renderDevice();
 selectFromHash();
+createIntro();
 if ("serviceWorker" in navigator && isSecureContext) {
   navigator.serviceWorker
     .register("./sw.js")
