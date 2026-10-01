@@ -181,8 +181,13 @@ export function createIntro() {
     document.body.classList.remove("intro-open");
     root.setAttribute("aria-modal", "false");
     root.inert = true;
+    const canRestoreFocus =
+      priorFocus?.isConnected &&
+      priorFocus !== document.body &&
+      !priorFocus.closest("[hidden], [inert]") &&
+      priorFocus.getClientRects().length > 0;
     const target =
-      priorFocus?.isConnected && priorFocus !== document.body
+      canRestoreFocus
         ? priorFocus
         : document.querySelector('.dock-button[aria-selected="true"]');
     target?.focus({ preventScroll: true });

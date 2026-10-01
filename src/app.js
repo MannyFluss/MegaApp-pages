@@ -174,6 +174,10 @@ function applyPreferences() {
       : colorScheme.matches
         ? "dark"
         : "light";
+  const nextTheme =
+    document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  $("theme-toggle").setAttribute("aria-label", `Switch to ${nextTheme} theme`);
+  $("theme-toggle").title = `Switch to ${nextTheme} theme`;
   drawing.applySettings(values);
   drawing.redraw();
   marble.redraw();

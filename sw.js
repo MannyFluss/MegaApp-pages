@@ -1,4 +1,4 @@
-const VERSION = "megaapp-shell-v7";
+const VERSION = "megaapp-shell-v8";
 const ASSETS = [
   "./",
   "./index.html",

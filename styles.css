@@ -65,8 +65,8 @@ body {
   font-size: 0.875rem;
 }
 .marble-note-control select {
-  padding: 7px 10px;
-  min-height: 36px;
+  padding: 7px 36px 7px 10px;
+  min-height: 44px;
 }
 .marble-workspace {
   display: grid;
@@ -141,7 +141,7 @@ body {
   grid-column: 1 / -1;
   width: 100%;
   margin: 0;
-  min-height: 22px;
+  min-height: 44px;
 }
 .marble-instruction {
   color: var(--muted);
@@ -409,6 +409,11 @@ canvas:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
+/* Keep the board's focus cue inside the clipped drawing surface. */
+canvas:focus-visible {
+  outline-color: #3558f5;
+  outline-offset: -4px;
+}
 a {
   color: var(--accent);
 }
@@ -487,6 +492,13 @@ p {
   display: flex;
   align-items: center;
   gap: 18px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+#update-app {
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 .connection {
   font-size: 0.875rem;
@@ -550,7 +562,7 @@ main {
 .quiet-button,
 .primary-button {
   border-radius: 9px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 9px 13px;
   white-space: nowrap;
   font-size: 0.875rem;
@@ -594,6 +606,7 @@ main {
 }
 .segmented button {
   padding: 7px 12px;
+  min-height: 44px;
   border-radius: 6px;
   background: transparent;
   color: var(--muted);
@@ -612,10 +625,11 @@ main {
   align-items: center;
   font-size: 0.875rem;
   color: var(--muted);
+  min-height: 44px;
 }
 input[type="color"] {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: 0;
   padding: 2px;
   background: transparent;
@@ -623,6 +637,7 @@ input[type="color"] {
 input[type="range"] {
   accent-color: var(--accent);
   width: 88px;
+  min-height: 44px;
 }
 input[type="checkbox"] {
   accent-color: var(--accent);
@@ -713,8 +728,8 @@ input[type="checkbox"] {
 .zoom-controls button {
   background: transparent;
   color: var(--ink);
-  min-width: 38px;
-  min-height: 36px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 7px;
   font-size: 1rem;
 }
@@ -920,8 +935,19 @@ textarea {
   border-radius: 8px;
   color: var(--ink);
   padding: 10px 12px;
-  min-height: 42px;
+  min-height: 44px;
   min-width: 0;
+}
+/* Native macOS WebKit menus can ignore author sizing. Keep the menu native
+   while giving its closed control a dependable touch target and indicator. */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='m2 4 4 4 4-4' fill='none' stroke='%2360708b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
 }
 .capability-filters input {
   min-width: 260px;
@@ -934,7 +960,7 @@ textarea {
 }
 .variable-form {
   display: grid;
-  grid-template-columns: 1fr 120px 1.4fr auto;
+  grid-template-columns: minmax(0, 1fr) 120px minmax(0, 1.4fr) auto;
   gap: 14px;
   align-items: end;
   padding: 20px;
@@ -942,6 +968,13 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 14px;
   margin-bottom: 26px;
+}
+.variable-form label {
+  min-width: 0;
+}
+.variable-form input,
+.variable-form select {
+  width: 100%;
 }
 .variable-form .form-error {
   grid-column: 1/-1;
@@ -1107,6 +1140,9 @@ textarea {
 :root[data-theme="dark"] .brand-mark {
   color: #142044;
 }
+:root[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='m2 4 4 4 4-4' fill='none' stroke='%23a6b4ce' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
 @media (max-width: 760px) {
   .capability-row {
     gap: 12px;
@@ -1174,16 +1210,23 @@ textarea {
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 58px auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
   }
   .topbar {
-    padding: 0 14px;
+    padding: 7px 14px;
+    min-height: 58px;
+    flex-wrap: wrap;
   }
   .edition {
     display: none;
   }
   .topbar-actions {
     gap: 8px;
+    margin-left: auto;
+  }
+  .topbar:has(#update-app) .topbar-actions {
+    flex: 1 1 100%;
+    justify-content: space-between;
   }
   .dock {
     display: grid;
@@ -1409,7 +1452,7 @@ textarea {
     width: 100%;
   }
   .variable-form {
-    grid-template-columns: 1fr 100px;
+    grid-template-columns: minmax(0, 1fr) 100px;
     padding: 15px;
     gap: 12px;
   }
@@ -1424,6 +1467,19 @@ textarea {
   * {
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+@media (max-width: 380px) {
+  .marble-toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .marble-toolbar .segmented,
+  .marble-note-control {
+    grid-column: 1 / -1;
+  }
+  .marble-note-control {
+    order: 0;
   }
 }
 
@@ -1638,12 +1694,31 @@ body.intro-open {
   .intro-copy h1 {
     font-size: clamp(3rem, 8vw, 6rem);
   }
+  .intro-composition {
+    grid-template-columns: 1.1fr 1fr;
+    grid-template-rows: auto;
+    padding-top: 0;
+    gap: 14px;
+  }
   .intro-copy p {
     margin-top: 12px;
     font-size: 0.8rem;
   }
   .intro-art {
-    height: 55dvh;
+    height: min(55dvh, 100%);
+    min-height: 0;
+    max-height: none;
+  }
+  .intro-entry {
+    flex-wrap: nowrap;
+  }
+  .intro-enter {
+    width: auto;
+    gap: 28px;
+  }
+  .intro-swipe {
+    gap: 8px;
+    white-space: nowrap;
   }
   .intro-enter {
     min-height: 48px;
@@ -1651,6 +1726,30 @@ body.intro-open {
   }
   .intro-tools {
     margin-top: 10px;
+  }
+}
+/* Short split-view windows still keep both entry actions reachable. */
+@media (max-height: 620px) and (max-width: 599px) {
+  .intro-composition {
+    padding-top: 12px;
+    gap: 12px;
+  }
+  .intro-copy h1 {
+    font-size: clamp(2.5rem, 12vw, 4rem);
+  }
+  .intro-copy p {
+    margin-top: 10px;
+  }
+  .intro-art {
+    min-height: 0;
+    max-height: 28dvh;
+  }
+  .intro-enter {
+    min-height: 48px;
+    padding: 10px 20px;
+  }
+  .intro-tools {
+    margin-top: 8px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
