@@ -102,6 +102,21 @@
             <path d="m12 3 9 5-9 5-9-5Z m-9 9 9 5 9-5 M3 16l9 5 9-5" /></svg
           ><span>State</span>
         </button>
+        <button
+          class="dock-button"
+          id="tab-design"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-design"
+          tabindex="-1"
+          data-panel="design"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 5v15M3 4h5a4 4 0 0 1 4 2 4 4 0 0 1 4-2h5v15h-5a4 4 0 0 0-4 2 4 4 0 0 0-4-2H3Z"
+            /></svg
+          ><span>Design</span>
+        </button>
         <span class="dock-spacer"></span
         ><button
           id="theme-toggle"
@@ -567,6 +582,34 @@
             Export a copy to move or back them up. Production state and cloud
             sync come later.
           </p>
+        </section>
+        <section
+          id="panel-design"
+          class="panel design-panel"
+          role="tabpanel"
+          aria-labelledby="tab-design"
+          hidden
+        >
+          <div class="panel-heading design-heading">
+            <div>
+              <h1>Design reading</h1>
+              <p>Care &amp; consequence: our interactive Jony Ive study.</p>
+            </div>
+            <a
+              class="quiet-button design-open"
+              href="./reading/care-and-consequence.html"
+              target="_blank"
+              rel="noopener"
+              >Open full page</a
+            >
+          </div>
+          <iframe
+            id="design-reader"
+            class="design-reader"
+            title="Care and consequence, an interactive field guide to Jony Ive"
+            src="./reading/care-and-consequence.html"
+            loading="lazy"
+          ></iframe>
         </section>
       </main>
     </div>

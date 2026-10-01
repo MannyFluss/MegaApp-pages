@@ -1,4 +1,4 @@
-const VERSION = "megaapp-shell-v5";
+const VERSION = "megaapp-shell-v6";
 const ASSETS = [
   "./",
   "./index.html",
@@ -20,6 +20,7 @@ const ASSETS = [
   "./src/render-worker.js",
   "./src/audio-worklet.js",
   "./src/webmcp.js",
+  "./reading/care-and-consequence.html",
 ];
 const urls = new Set(ASSETS.map((p) => new URL(p, self.location).href));
 // A new shell must not inherit still-fresh HTTP responses from the old app.
