@@ -1,7 +1,9 @@
+import { MEGAAPP_ASSET_REPOSITORY } from "./reading-config.js";
 export const TYPES = ["string", "number", "boolean", "object", "array", "null"];
 export const DEFAULTS = {
   schemaVersion: 1,
   variables: [
+    { name: "MEGAAPP_ASSET_REPOSITORY", type: "string", value: MEGAAPP_ASSET_REPOSITORY },
     { name: "system.theme", type: "string", value: "auto" },
     { name: "apps.canvas.brushSize", type: "number", value: 8 },
     { name: "apps.canvas.pressure", type: "boolean", value: true },

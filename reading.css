@@ -9,6 +9,9 @@
 .reading-shelf p { font-size:13px; line-height:1.5; color:var(--muted); }
 .reading-connection { padding-bottom:20px; border-bottom:1px solid var(--line); }
 .reading-connection button { width:100%; margin-top:10px; }
+.reading-connection label { display:block; margin:14px 0 6px; font-size:13px; }
+.reading-connection input { width:100%; min-width:0; min-height:44px; }
+.reading-setup button { width:100%; margin-top:10px; }
 .reading-account { overflow-wrap:anywhere; }
 .reading-paper { display:block; width:100%; text-align:left; padding:14px 10px; background:transparent; border:0; border-bottom:1px solid var(--line); border-radius:0; cursor:pointer; color:var(--ink); }
 .reading-paper strong { display:block; font-size:14px; line-height:1.4; overflow-wrap:anywhere; }
@@ -28,7 +31,7 @@
 .reading-text { padding:0 18px 18px; }
 .reading-text pre { white-space:pre-wrap; font:15px/1.65 Georgia,serif; color:var(--ink); max-width:75ch; }
 .reading-setup { padding-top:18px; margin-top:18px; border-top:1px solid var(--line); font-size:13px; }
-.reading-setup label { display:block; margin:16px 0 6px; }
+.reading-setup label { display:block; margin:16px 0 6px; overflow-wrap:anywhere; }
 .reading-setup input { width:100%; min-width:0; }
 .reading-setup summary,.reading-text summary { cursor:pointer; min-height:36px; }
 .reading-guide { color:var(--accent); }

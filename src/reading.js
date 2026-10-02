@@ -1,44 +1,68 @@
 import { createFileRepository } from "./file-repository.js";
 import { createReadingLibrary, READING_DATABASE } from "./reading-library.js";
-import { createReadingDrive, createReadingAuth, validClientId } from "./reading-drive.js";
-import { READING_CLIENT_ID } from "./reading-config.js";
+import { createReadingGit, parseRepository } from "./reading-git.js";
+import { MEGAAPP_ASSET_REPOSITORY, READING_SAMPLE_HASH } from "./reading-config.js";
+import { validatePDF, pdfHash } from "./reading-assets.js";
 const $ = (name) => document.getElementById(`reading-${name}`);
 const sizeLabel = (size) => size < 1024 * 1024 ? `${Math.round(size / 1024)} KB` : `${(size / 1024 / 1024).toFixed(1)} MB`;
-export function createReading({ notify }) {
-  let visible = false, library, account = null, remote = [], current, pdf, activeLoading, pdfjs, rendering, visiblePage = 1, zoom = 1, epoch = 0, busy = false, auth, prepared = false, objectURL;
+export function createReading({ notify, stateReady, onRepositorySaved }) {
+  let visible = false, library, account = null, remote = [], current, pdf, activeLoading, pdfjs, rendering, visiblePage = 1, zoom = 1, epoch = 0, busy = false, storage, session, objectURL;
   const viewKey = "megaapp-reading-view-v1";
   let resumeId = "";
   try { const value = localStorage.getItem(viewKey); if (value && value.length < 600) resumeId = value; } catch { /* session view */ }
-  const configKey = "megaapp-reading-public-client-v1";
-  let clientId = READING_CLIENT_ID;
-  try { clientId ||= localStorage.getItem(configKey) || ""; } catch { /* public configuration is optional */ }
-  $("client").value = clientId;
+  let repositoryURL = MEGAAPP_ASSET_REPOSITORY;
+  $("repository").value = repositoryURL;
+  const savedRepository = stateReady.then(async (store) => {
+    let setting = store.rows().find((row) => row.name === "MEGAAPP_ASSET_REPOSITORY");
+    if (!setting) {
+      await store.set("MEGAAPP_ASSET_REPOSITORY", "string", MEGAAPP_ASSET_REPOSITORY);
+      onRepositorySaved(); setting = { type: "string", value: MEGAAPP_ASSET_REPOSITORY };
+    }
+    if (setting.type !== "string") throw new Error("MEGAAPP_ASSET_REPOSITORY must be a string repository link.");
+    repositoryURL = parseRepository(setting.value).url; $("repository").value = repositoryURL;
+  }).catch((error) => { status(error.message); $("setup").open = true; });
+  function disconnect() {
+    session = null; storage = null; account = null; remote = [];
+    $("key").value = ""; $("connect").textContent = "Connect library";
+  }
   const status = (message) => { $("status").textContent = message; };
   const ready = createFileRepository({ name: READING_DATABASE }).then(async (repository) => {
-    const drive = createReadingDrive({ getToken: () => auth?.getToken() || "" });
-    library = createReadingLibrary({ repository, drive, getAccount: () => account });
+    const proxy = Object.fromEntries(["reserveId", "upload", "list", "download"].map((name) => [name, (...args) => {
+      if (!storage) throw new Error("Connect your GitHub library first.");
+      return storage[name](...args);
+    }]));
+    library = createReadingLibrary({ repository, storage: proxy, getAccount: () => account });
     if (repository.warning) { status(repository.warning); $("cache-warning").hidden = false; $("cache-warning").textContent = repository.warning; }
     let rows = await repository.list();
-    if (!rows.length) {
-      const response = await fetch("./output/pdf/a-place-for-papers.pdf");
-      if (!response.ok) throw new Error("Open Reading online once to load the sample PDF.");
-      await library.import(await response.blob(), "A place for papers.pdf", { sample: true });
-      rows = await repository.list();
+    for (const record of rows.filter((r) => r.owner && !r.owner.startsWith("github:"))) {
+      // Keep every local original while retiring unfinished Google bindings.
+      await repository.update(record.id, ({ driveId: _old, ...local }) => ({ ...local, owner: "", remoteId: "", uploaded: false, cloudAvailable: false }));
+    }
+    const oldSample = rows.find((r) => r.sample && !r.uploaded && r.hash !== READING_SAMPLE_HASH);
+    if (!rows.length || oldSample) {
+      try {
+        const response = await fetch("./output/pdf/a-place-for-papers.pdf");
+        if (!response.ok) throw new Error("Open Reading online once to load the sample PDF.");
+        const blob = await validatePDF(await response.blob()), hash = await pdfHash(blob);
+        if (hash !== READING_SAMPLE_HASH) throw new Error("The sample update needs the new offline shell. Existing cached papers are available.");
+        if (oldSample) await repository.update(oldSample.id, (record) => record.uploaded ? record : { ...record, blob, hash, page: 1, remoteId: "" });
+        else await library.import(blob, "A place for papers.pdf", { sample: true });
+      } catch (error) { if (!rows.length) throw error; status(error.message); }
     }
     await renderLibrary();
     return library;
   });
   ready.catch((error) => status(error.message));
   function controls() {
-    $("upload").disabled = busy || !current || !pdf || !account || (current.owner && current.owner !== account.id);
-    $("upload").textContent = current?.uploaded ? "Verify Drive copy" : "Upload to Drive";
+    $("upload").disabled = busy || !current || !pdf || !account?.writable || (current.owner && current.owner !== account.id);
+    $("upload").textContent = current?.uploaded ? "Verify GitHub copy" : "Upload to GitHub";
     $("refresh").disabled = busy || !account;
     $("import").disabled = busy;
-    $("connect").disabled = busy;
-    $("client").disabled = busy;
+    $("connect").disabled = busy || !!session;
+    $("repository").disabled = busy; $("key").disabled = busy; $("save-repository").disabled = busy;
     $("disconnect").disabled = busy;
-    $("account").textContent = account ? account.email : "Drive disconnected";
-    $("disconnect").hidden = !account;
+    $("account").textContent = account ? account.email : "GitHub disconnected";
+    $("disconnect").hidden = !session; $("key-label").hidden = !!session; $("key").hidden = !!session;
     $("prev").disabled = busy || !pdf || visiblePage <= 1;
     $("next").disabled = busy || !pdf || visiblePage >= pdf.numPages;
     $("download").disabled = !current;
@@ -57,8 +81,8 @@ export function createReading({ notify }) {
     button.setAttribute("aria-pressed", String(!cloud && current?.id === record.id));
     const title = document.createElement("strong"); title.textContent = record.name;
     const detail = document.createElement("span");
-    detail.textContent = cloud ? `In Google Drive · ${sizeLabel(record.size)} · Download to read` :
-      `On this device · ${sizeLabel(record.blob.size)}${record.uploaded ? record.cloudAvailable === false ? " · Drive copy unavailable" : " · Uploaded to Drive" : record.driveId ? " · Upload pending" : record.sample ? " · Sample" : " · Local only"}`;
+    detail.textContent = cloud ? `In GitHub · ${sizeLabel(record.size)} · Download to read` :
+      `On this device · ${sizeLabel(record.blob.size)}${record.uploaded ? record.cloudAvailable === false ? " · GitHub copy unavailable" : " · Uploaded to GitHub" : record.remoteId ? " · Upload pending" : record.sample ? " · Sample" : " · Local only"}`;
     button.append(title, detail);
     button.onclick = () => action(async () => {
       if (cloud) { status("Downloading and checking the PDF…"); const saved = await library.cache(record); await open(saved); status(library.repository.mode === "memory" ? "PDF available for this session. Save PDF before closing." : "PDF saved on this device. You can read it offline."); }
@@ -71,10 +95,10 @@ export function createReading({ notify }) {
     if (!library) return;
     const records = (await library.repository.list()).filter((r) => !r.owner || !account || r.owner === account.id);
     $("local-list").replaceChildren(...records.map((r) => rowButton(r)));
-    const uncached = remote.filter((file) => !records.some((r) => r.owner === account?.id && r.driveId === file.id && r.hash === file.hash));
+    const uncached = remote.filter((file) => !records.some((r) => r.owner === account?.id && r.remoteId === file.id && r.hash === file.hash));
     $("cloud-list").replaceChildren(...uncached.map((file) => rowButton(file, true)));
     $("cloud-empty").hidden = uncached.length > 0;
-    $("cloud-empty").textContent = account ? remote.length ? "All Drive PDFs are cached on this device." : "No PDFs here yet. Upload a document from this device." : "Connect the same Google account on each device to share your library.";
+    $("cloud-empty").textContent = account ? remote.length ? "All GitHub PDFs are cached on this device." : "No PDFs here yet. Upload a document from this device." : "Connect this private repository on each device to share your library.";
     $("count").textContent = `${records.length} ${records.length === 1 ? "paper" : "papers"} ${library.repository.mode === "memory" ? "in this session" : "on this device"}`;
     controls();
   }
@@ -129,6 +153,7 @@ export function createReading({ notify }) {
       $("page-input").value = String(visiblePage);
       $("zoom-label").textContent = `${Math.round(zoom * 100)}%`;
       const text = await page.getTextContent();
+      if (request !== epoch || pageNumber !== visiblePage || doc !== pdf) return;
       $("text").textContent = text.items.map((item) => `${item.str}${item.hasEOL ? "\n" : " "}`).join("");
       controls();
     } catch (error) { if (error.name !== "RenderingCancelledException" && request === epoch) status(`PDF could not render: ${error.message}`); }
@@ -146,47 +171,59 @@ export function createReading({ notify }) {
   $("file").onchange = () => action(async () => {
     const file = $("file").files[0]; $("file").value = ""; if (!file) return;
     const saved = await library.import(file, file.name); await open(saved); await renderLibrary();
-    status(library.repository.mode === "memory" ? "PDF kept for this session. Save PDF or upload to Drive before closing." : "PDF saved on this device. Upload to Drive when you want it on your other devices.");
+    status(library.repository.mode === "memory" ? "PDF kept for this session. Save PDF or upload to GitHub before closing." : "PDF saved on this device. Upload to GitHub when you want it on your other devices.");
   });
   $("upload").onclick = () => action(async () => {
-    current = await library.upload(current.id, (progress) => status(`Uploading to Drive… ${Math.round(progress * 100)}%`));
+    current = await library.upload(current.id, (progress) => status(`Uploading to GitHub… ${Math.round(progress * 100)}%`));
     remote = await library.refresh(); await renderLibrary();
-    status("PDF stored in Google Drive. On your other device, connect the same account and refresh.");
+    status("PDF stored in GitHub. On your other device, connect this repository and refresh.");
   });
   $("refresh").onclick = () => action(async () => {
-    status("Refreshing Google Drive…"); remote = await library.refresh(); await renderLibrary();
+    status("Refreshing GitHub…"); remote = await library.refresh(); await renderLibrary();
     status(`Library refreshed at ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}. Choose a cloud PDF to cache it here.`);
+  });
+  $("save-repository").onclick = () => action(async () => {
+    const value = parseRepository($("repository").value).url;
+    const store = await stateReady;
+    await store.set("MEGAAPP_ASSET_REPOSITORY", "string", value); onRepositorySaved();
+    repositoryURL = value; $("repository").value = value;
+    disconnect(); await renderLibrary();
+    status("Repository location saved in State. Paste its key to connect on this device.");
   });
   $("connect").onclick = () => {
     if (busy) return;
-    if (!prepared) return action(async () => {
-      clientId = $("client").value.trim();
-      if (!validClientId(clientId)) { $("setup").open = true; $("client").focus(); throw new Error("Connection setup needs a public Google OAuth client ID. See the setup guide below."); }
-      auth?.disconnect(); account = null; remote = [];
-      auth = createReadingAuth({ clientId }); await auth.prepare(); prepared = true;
-      try { localStorage.setItem(configKey, clientId); } catch { /* session configuration */ }
-      $("connect").textContent = "Sign in to Google";
-      status("Google sign-in is ready. Tap Sign in to Google to choose your account."); await renderLibrary();
-    });
-    // Start the popup before any awaited work, directly within the click.
-    const connecting = auth.connect();
+    const key = $("key").value.trim(); $("key").value = "";
     return action(async () => {
-      await connecting;
-      const drive = createReadingDrive({ getToken: () => auth.getToken() });
-      account = await drive.account(); remote = await library.refresh();
-      $("connect").textContent = "Reconnect Google"; await renderLibrary();
+      await savedRepository;
+      const value = parseRepository($("repository").value).url;
+      if (!/^github_pat_[a-zA-Z0-9_]{20,250}$/.test(key))
+        throw new Error("Paste a fine-grained GitHub key for this repository. The repository link alone does not grant access.");
+      disconnect();
+      const connected = { key, expires: Date.now() + 60 * 60 * 1000 };
+      session = connected;
+      storage = createReadingGit({ repository: value, getToken: () => session === connected && Date.now() < connected.expires ? connected.key : "" });
+      try {
+        status("Checking the private library…"); account = await storage.account();
+        const store = await stateReady;
+        await store.set("MEGAAPP_ASSET_REPOSITORY", "string", value); onRepositorySaved(); repositoryURL = value;
+        remote = await library.refresh();
+      } catch (error) { disconnect(); await renderLibrary(); throw error; }
+      await renderLibrary();
       if (current?.owner && current.owner !== account.id) {
         current = null; epoch++; rendering?.cancel(); await activeLoading?.destroy(); activeLoading = null; pdf = null;
         $("canvas").width = 0; $("text").textContent = ""; $("title").textContent = "Choose a paper"; controls();
       }
-      status("Connected. Upload a local PDF, or download a paper already in your Drive library.");
+      $("connect").textContent = "Connected"; $("connect").disabled = true;
+      status(account.writable ? "Connected. Upload a PDF, or choose a repository paper to read here." : "Connected for reading. Uploads need Contents read/write access.");
     });
   };
-  $("client").oninput = () => { prepared = false; auth?.disconnect(); account = null; remote = []; $("connect").textContent = "Connect Google Drive"; renderLibrary(); };
+  $("repository").oninput = () => { disconnect(); renderLibrary(); };
   $("disconnect").onclick = () => {
-    auth?.disconnect(); account = null; remote = []; prepared = false; $("connect").textContent = "Connect Google Drive";
-    renderLibrary(); status("Disconnected on this device. Cached PDFs remain here. Revoke app permission in your Google account to remove the grant.");
+    disconnect(); renderLibrary(); status("Disconnected. The key was forgotten; cached PDFs remain here. Revoke the key on GitHub to end access everywhere.");
   };
+  setInterval(() => {
+    if (session && Date.now() >= session.expires) { disconnect(); renderLibrary(); status("Connection expired after one hour. Paste your key to reconnect; cached PDFs remain available."); }
+  }, 30000);
   $("download").onclick = () => {
     if (!current) return;
     if (objectURL) URL.revokeObjectURL(objectURL);
@@ -203,6 +240,15 @@ export function createReading({ notify }) {
       visible = value;
       if (!value) { rendering?.cancel(); return; }
       ready.then(async () => {
+        await savedRepository;
+        if (!busy) {
+          try {
+            const setting = (await stateReady).rows().find((row) => row.name === "MEGAAPP_ASSET_REPOSITORY");
+            if (setting && setting.type !== "string") throw new Error("MEGAAPP_ASSET_REPOSITORY must be a string repository link.");
+            const value = parseRepository(setting?.value ?? MEGAAPP_ASSET_REPOSITORY).url;
+            if (value !== repositoryURL) { disconnect(); repositoryURL = value; $("repository").value = value; await renderLibrary(); }
+          } catch (error) { disconnect(); await renderLibrary(); status(error.message); $("setup").open = true; }
+        }
         if (!visible) return;
         if (!current) {
           const rows = await library.repository.list();

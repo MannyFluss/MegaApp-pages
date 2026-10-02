@@ -40,3 +40,7 @@ This experiment does not choose the production environment schema, cloud archite
 Manny corrected the cloud scope: Drive itself is the independent asset service, not a custom cloud host for MegaApp. Reading connects directly from the browser with `drive.file`, uploads actual PDFs, and caches them separately from small configuration/state. No backend or production environment schema is selected. Synchronization is explicit and foreground; page position remains local. See [PDF library](pdf-library.md).
 
 The earlier Cloud Run deployment was a scope mistake. Stop this deployment path. Unused resources are recorded privately in `docs/cloud-scope-correction.md`; their removal is a separate cleanup decision. They are not used by Reading.
+
+## October 1: Git replaces Drive for Reading assets
+
+Manny chose a separate private GitHub repository, `MannyFluss/MegaApp-library`, as the actual PDF asset store. Static MegaApp remains on GitHub Pages. `MEGAAPP_ASSET_REPOSITORY` is a portable public location variable in State; a fine-grained repository-scoped key is entered separately and held only in memory. PDFs and per-paper metadata are committed together using hash-based paths and non-forced branch updates. Explicit foreground upload/refresh and offline local caches remain; reading progress stays local. No Google setup or custom hosting is resumed. See [current PDF library](pdf-library.md); the preceding Drive entry is historical.

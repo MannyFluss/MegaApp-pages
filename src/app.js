@@ -86,7 +86,7 @@ const marble = createMarbleMusic({
 const platformer = createPlatformer({ notify });
 platformer.setVisible(false);
 const files = createFilesDemo({ notify });
-const reading = createReading({ notify });
+const reading = createReading({ notify, stateReady: storeReady, onRepositorySaved: () => { storeReady.then((value) => { store = value; renderState(); }); } });
 const tabs = [...document.querySelectorAll("[data-panel]")];
 const results = new Map();
 function selectTab(tab, { route = true } = {}) {

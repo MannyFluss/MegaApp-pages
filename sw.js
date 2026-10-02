@@ -1,4 +1,4 @@
-const VERSION = "megaapp-shell-v13";
+const VERSION = "megaapp-shell-v14";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,11 +6,12 @@ const ASSETS = [
   "./files-demo.css",
   "./reading.css",
   "./src/reading.js",
-  "./src/reading-drive.js",
+  "./src/reading-git.js",
+  "./src/reading-assets.js",
   "./src/reading-library.js",
   "./src/reading-config.js",
   "./output/pdf/a-place-for-papers.pdf",
-  "./reading/drive-guide.html",
+  "./reading/git-guide.html",
   "./vendor/pdfjs/pdf.mjs",
   "./vendor/pdfjs/pdf.worker.mjs",
   "./vendor/pdfjs/standard_fonts/FoxitDingbats.pfb",
