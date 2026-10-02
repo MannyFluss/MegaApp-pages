@@ -1,4 +1,5 @@
 import { MEGAAPP_ASSET_REPOSITORY } from "./reading-config.js";
+import { storageName } from "./environment.js";
 export const TYPES = ["string", "number", "boolean", "object", "array", "null"];
 export const DEFAULTS = {
   schemaVersion: 1,
@@ -131,10 +132,11 @@ export async function createSampleStore() {
     db = null,
     mode = "session",
     warning = "";
-  const fallbackKey = "megaapp.sample.v1";
+  const fallbackKey = storageName("megaapp.sample.v1");
+  const testKey = storageName("megaapp.storage-test");
   try {
     db = await new Promise((resolve, reject) => {
-      const r = indexedDB.open("megaapp-sample", 1);
+      const r = indexedDB.open(storageName("megaapp-sample"), 1);
       r.onupgradeneeded = () => r.result.createObjectStore("snapshot");
       r.onsuccess = () => resolve(r.result);
       r.onerror = () => reject(r.error);
@@ -168,8 +170,8 @@ export async function createSampleStore() {
     try {
       const saved = localStorage.getItem(fallbackKey);
       if (saved) data = validateSnapshot(JSON.parse(saved));
-      localStorage.setItem("megaapp.storage-test", "1");
-      localStorage.removeItem("megaapp.storage-test");
+      localStorage.setItem(testKey, "1");
+      localStorage.removeItem(testKey);
       mode = "localstorage";
       warning = "Using local storage because IndexedDB could not open.";
     } catch {

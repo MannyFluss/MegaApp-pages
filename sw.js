@@ -1,10 +1,17 @@
-const VERSION = "megaapp-shell-v14";
+const VERSION = "megaapp-shell-v16";
+const WORKING = self.location.pathname.startsWith("/MegaApp-working/");
+const CACHE_PREFIX = WORKING ? "megaapp-working-shell-" : "megaapp-shell-";
+const CACHE_VERSION = WORKING ? VERSION.replace("megaapp-shell-", CACHE_PREFIX) : VERSION;
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./files-demo.css",
   "./reading.css",
+  "./meta.css",
+  "./src/meta.js",
+  "./src/environment.js",
+  "./src/pdf-workspace.js",
   "./src/reading.js",
   "./src/reading-git.js",
   "./src/reading-assets.js",
@@ -67,7 +74,7 @@ const urls = new Set(ASSETS.map((p) => new URL(p, self.location).href));
 self.addEventListener("install", (event) =>
   event.waitUntil(
     caches
-      .open(VERSION)
+      .open(CACHE_VERSION)
       .then((cache) =>
         cache.addAll(
           [...urls].map((url) => new Request(url, { cache: "reload" })),
@@ -79,7 +86,7 @@ self.addEventListener("activate", (event) =>
   event.waitUntil(
     (async () => {
       for (const key of await caches.keys())
-        if (key.startsWith("megaapp-shell-") && key !== VERSION)
+        if (key.startsWith(CACHE_PREFIX) && key !== CACHE_VERSION)
           await caches.delete(key);
       await self.clients.claim();
     })(),
@@ -99,7 +106,7 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET" || !urls.has(requestUrl.href)) return;
   event.respondWith(
     (async () => {
-      const cache = await caches.open(VERSION);
+      const cache = await caches.open(CACHE_VERSION);
       try {
         // Revalidate online assets; the shell cache still handles offline use.
         const response = await fetch(event.request, { cache: "no-cache" });

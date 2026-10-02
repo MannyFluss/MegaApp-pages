@@ -1,3 +1,5 @@
+import { storageName } from "./environment.js";
+
 export function createIntro() {
   const root = document.getElementById("workspace-intro");
   const shell = document.querySelector(".app-shell");
@@ -11,7 +13,7 @@ export function createIntro() {
   raster.width = 288;
   raster.height = 216;
   const ink = raster.getContext("2d", { willReadFrequently: true });
-  const storageKey = "megaapp.intro.v1";
+  const storageKey = storageName("megaapp.intro.v1");
   let frame = 0,
     started = 0,
     phase = "hidden",
@@ -189,7 +191,7 @@ export function createIntro() {
     const target =
       canRestoreFocus
         ? priorFocus
-        : document.querySelector('.dock-button[aria-selected="true"]');
+        : document.getElementById("meta-open");
     target?.focus({ preventScroll: true });
   }
   function finish() {

@@ -1,4 +1,5 @@
 import { createFileRepository } from "./file-repository.js";
+import { storageName } from "./environment.js";
 import { createFileWorkspace } from "./file-workspace.js";
 import { createMockDriveAdapter } from "./mock-drive.js";
 import { createGoogleDriveAdapter } from "./drive-adapter.js";
@@ -296,7 +297,7 @@ export function createFilesDemo({ notify = () => {} } = {}) {
   async function initialize() {
     if (initialization) return initialization;
     initialization = (async () => {
-      repository = await createFileRepository(live ? { name: "megaapp-live-drive-files-v1" } : {});
+      repository = await createFileRepository({ name: storageName(live ? "megaapp-live-drive-files-v1" : "megaapp-files-v1") });
       adapter = live ? createGoogleDriveAdapter({ isOnline: () => liveConnected && navigator.onLine }) : createMockDriveAdapter(repository);
       workspace = createFileWorkspace({ repository, adapter });
       if (live) {

@@ -2,6 +2,7 @@ import { createCanvas } from "./canvas.js";
 import { createMarbleMusic } from "./marble.js";
 import { createPlatformer } from "./platformer.js";
 import { createIntro } from "./intro.js";
+import { createMeta } from "./meta.js";
 import { createReading } from "./reading.js";
 import { createFilesDemo } from "./files-demo.js";
 import { validateScene } from "./marble-physics.js";
@@ -14,6 +15,7 @@ import {
 import { renderCapabilities } from "./capabilities.js";
 import { createProbes } from "./probes.js";
 import { registerAgentTools } from "./webmcp.js";
+import { storageName } from "./environment.js";
 
 const $ = (id) => document.getElementById(id);
 let toastTimer, store;
@@ -89,7 +91,21 @@ const files = createFilesDemo({ notify });
 const reading = createReading({ notify, stateReady: storeReady, onRepositorySaved: () => { storeReady.then((value) => { store = value; renderState(); }); } });
 const tabs = [...document.querySelectorAll("[data-panel]")];
 const results = new Map();
-function selectTab(tab, { route = true } = {}) {
+const lastAppKey = storageName("megaapp.last-app.v1");
+let activePanel = "marble", meta, resumeAfterMeta;
+function updateAppVisibility() {
+  const working = !meta?.isOpen();
+  marble.setVisible(working && activePanel === "marble");
+  platformer.setVisible(working && activePanel === "jump");
+  files.setVisible(activePanel === "files");
+  reading.setVisible(working && activePanel === "reading");
+}
+function focusApp() {
+  const panel = $(`panel-${activePanel}`);
+  panel.tabIndex = -1;
+  panel.focus({ preventScroll: true });
+}
+function selectTab(tab, { route = true, focus = route } = {}) {
   for (const t of tabs) {
     const active = t === tab;
     t.setAttribute("aria-selected", String(active));
@@ -97,11 +113,10 @@ function selectTab(tab, { route = true } = {}) {
     t.classList.toggle("selected", active);
     $(`panel-${t.dataset.panel}`).hidden = !active;
   }
-  if (tab.dataset.panel === "canvas") drawing.resize();
-  marble.setVisible(tab.dataset.panel === "marble");
-  platformer.setVisible(tab.dataset.panel === "jump");
-  files.setVisible(tab.dataset.panel === "files");
-  reading.setVisible(tab.dataset.panel === "reading");
+  activePanel = tab.dataset.panel;
+  try { localStorage.setItem(lastAppKey, activePanel); } catch { /* Resume is optional. */ }
+  if (activePanel === "canvas") drawing.resize();
+  updateAppVisibility();
   if (tab.dataset.panel === "device") renderDevice();
   if (route)
     history.replaceState(
@@ -109,10 +124,18 @@ function selectTab(tab, { route = true } = {}) {
       "",
       `${location.pathname}${location.search}#${tab.dataset.panel}`,
     );
+  const wasOpen = meta?.isOpen();
+  if (wasOpen) meta.close({ restoreFocus: false });
+  if (focus || wasOpen) focusApp();
 }
 function selectFromHash() {
   const tab = tabs.find((value) => `#${value.dataset.panel}` === location.hash);
-  selectTab(tab || $("tab-marble"), { route: false });
+  let resumed;
+  if (!location.hash) {
+    try { resumed = tabs.find((value) => value.dataset.panel === localStorage.getItem(lastAppKey)); }
+    catch { /* Local storage is optional. */ }
+  }
+  selectTab(tab || resumed || $("tab-marble"), { route: Boolean(resumed), focus: false });
 }
 window.addEventListener("hashchange", selectFromHash);
 const openState = () => selectTab($("tab-state"));
@@ -128,6 +151,24 @@ const probes = createProbes({
 function renderDevice() {
   renderCapabilities({ runProbe: probes.run, results });
 }
+meta = createMeta({
+  onOpenChange(open) {
+    if (open) resumeAfterMeta = {
+      panel: activePanel,
+      marble: $("marble-play").getAttribute("aria-pressed") === "true",
+      jump: $("platformer-canvas").dataset.phase === "playing",
+    };
+    updateAppVisibility();
+    if (!open) {
+      if (resumeAfterMeta?.panel === activePanel && !document.hidden) {
+        if (resumeAfterMeta.marble && activePanel === "marble") $("marble-play").click();
+        if (resumeAfterMeta.jump && activePanel === "jump" && $("platformer-canvas").dataset.phase === "paused") $("platformer-play").click();
+      }
+      resumeAfterMeta = null;
+    }
+  },
+  focusApp,
+});
 for (const tab of tabs) {
   tab.onclick = () => selectTab(tab);
   tab.onkeydown = (e) => {
@@ -154,8 +195,8 @@ for (const tab of tabs) {
                   ? 1
                   : tabs.length - 1)) %
               tabs.length;
+    for (const value of tabs) value.tabIndex = value === tabs[next] ? 0 : -1;
     tabs[next].focus();
-    selectTab(tabs[next]);
   };
 }
 for (const id of ["capability-search", "capability-filter"])

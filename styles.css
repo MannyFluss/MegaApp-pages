@@ -442,13 +442,18 @@ p {
 }
 .app-shell {
   display: grid;
-  grid-template-columns: 80px minmax(0, 1fr);
-  grid-template-rows: 64px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   min-height: 100svh;
   min-height: 100dvh;
   padding-top: env(safe-area-inset-top);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+  touch-action: pan-y pinch-zoom;
+}
+.app-shell > .topbar,
+.app-shell > .dock {
+  display: none;
 }
 .topbar {
   grid-column: 1/-1;
@@ -585,7 +590,7 @@ main {
 .canvas-panel {
   display: flex;
   flex-direction: column;
-  min-height: calc(100dvh - 64px);
+  min-height: 100dvh;
   padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 .canvas-toolbar {
@@ -1211,7 +1216,7 @@ select {
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
   }
   .topbar {
     padding: 7px 14px;

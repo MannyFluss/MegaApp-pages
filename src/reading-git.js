@@ -1,7 +1,19 @@
 import { MAX_PDF_BYTES, validatePDF, pdfHash } from "./reading-assets.js";
+import { validateWorkspace } from "./pdf-workspace.js";
 const SHA = /^[a-f0-9]{40}$/;
 const HASH = /^[a-f0-9]{64}$/;
 const API = "https://api.github.com/repos/";
+const WORKSPACE_ID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
+const MAX_WORKSPACE_BYTES = 32 * 1024 * 1024;
+export function validateGitWorkspace(value) {
+  if (!value || value.version !== 1 || !WORKSPACE_ID.test(value.id) || !HASH.test(value.pdfHash) ||
+      typeof value.name !== "string" || !value.name.length || value.name.length > 200)
+    throw new Error("This repository contains an unsupported PDF workspace. Your local work is kept.");
+  const workspace = validateWorkspace(value.workspace);
+  if (workspace.pdfHash !== value.pdfHash) throw new Error("The workspace does not match its original PDF.");
+  return { version: 1, id: value.id, pdfHash: value.pdfHash, name: value.name, workspace };
+}
+const workspaceJSON = (value) => `${JSON.stringify(validateGitWorkspace(value), null, 2)}\n`;
 export function parseRepository(value) {
   if (typeof value !== "string" || value.length > 240) throw new Error("Enter a GitHub repository link or owner/repository.");
   const match = /^(?:https:\/\/github\.com\/)?([a-zA-Z0-9][a-zA-Z0-9-]{0,38})\/([a-zA-Z0-9_.-]{1,100})\/?$/.exec(value.trim());
@@ -94,6 +106,20 @@ export function createReadingGit({ repository, getToken, fetcher = fetch }) {
     if (file.hash !== record.hash || file.size !== record.blob.size) throw new Error("The existing repository paper contains different data.");
     await adapter.download(file); return file;
   }
+  async function workspaceFromEntry(entry, expectedId, expectedHash) {
+    if (entry.type !== "blob" || entry.mode !== "100644" || !Number.isSafeInteger(entry.size) || entry.size < 1 || entry.size > MAX_WORKSPACE_BYTES)
+      throw new Error("Unsupported PDF workspace metadata. Your local work is kept.");
+    const blob = await request(`/git/blobs/${sha(entry.sha)}`, { raw: true, limit: MAX_WORKSPACE_BYTES });
+    const value = validateGitWorkspace(JSON.parse(await blob.text()));
+    if (value.id !== expectedId || (expectedHash && value.pdfHash !== expectedHash) || entry.path !== `workspaces/${value.id}.json`)
+      throw new Error("The workspace does not match its repository path or original PDF.");
+    return { ...value, sha: sha(entry.sha) };
+  }
+  async function workspaceAt(record, tree) {
+    if (!WORKSPACE_ID.test(record.workspaceId) || !HASH.test(record.hash)) throw new Error("Save a valid workspace before syncing.");
+    const entry = tree.find((item) => item.path === `workspaces/${record.workspaceId}.json`);
+    return entry ? workspaceFromEntry(entry, record.workspaceId, record.hash) : null;
+  }
   const adapter = {
     async account() {
       const repo = await request("");
@@ -118,7 +144,19 @@ export function createReadingGit({ repository, getToken, fetcher = fetch }) {
       // request for every asset at once. Corrupt records fail visibly.
       for (let offset = 0; offset < entries.length; offset += 4)
         files.push(...await Promise.all(entries.slice(offset, offset + 4).map((entry) => paperFromEntry(entry, tree))));
-      return files.sort((a, b) => a.name.localeCompare(b.name));
+      const workspaceEntries = tree.filter((item) => /^workspaces\/[a-f0-9-]{36}\.json$/.test(item.path));
+      if (workspaceEntries.length > 1000) throw new Error("This prototype supports up to 1,000 PDF workspaces.");
+      const workspaces = [];
+      for (let offset = 0; offset < workspaceEntries.length; offset += 4)
+        workspaces.push(...await Promise.all(workspaceEntries.slice(offset, offset + 4).map((entry) => workspaceFromEntry(entry, entry.path.slice(11, -5)))));
+      const result = files.filter((file) => !workspaces.some((value) => value.pdfHash === file.hash));
+      for (const value of workspaces) {
+        const file = files.find((item) => item.hash === value.pdfHash);
+        if (!file) throw new Error("A PDF workspace is missing its original paper. Your cached copies are kept.");
+        result.push({ ...file, id: `workspaces/${value.id}.json`, name: value.name,
+          workspaceId: value.id, workspace: value.workspace, workspaceSha: value.sha });
+      }
+      return result.sort((a, b) => a.name.localeCompare(b.name));
     },
     async download(file) {
       validateGitPaper(file);
@@ -126,6 +164,44 @@ export function createReadingGit({ repository, getToken, fetcher = fetch }) {
       if (blob.size !== file.size || await pdfHash(blob) !== file.hash)
         throw new Error("The repository PDF has changed or is corrupt. The previous cached copy is kept.");
       return blob;
+    },
+    async readWorkspace(record) {
+      const account = await this.account();
+      if (record.owner !== account.id) throw new Error("This workspace belongs to another repository. Reconnect its original repository.");
+      return workspaceAt(record, await treeAt((await head()).treeId));
+    },
+    async syncWorkspace(record, { expectedSha = null } = {}) {
+      const account = await this.account();
+      if (!account.writable) throw new Error("This key cannot sync. Give Contents read/write access to this library repository only.");
+      if (record.owner !== account.id) throw new Error("This workspace belongs to another repository. Reconnect its original repository.");
+      if (expectedSha !== null) sha(expectedSha);
+      const value = validateGitWorkspace({ version: 1, id: record.workspaceId, pdfHash: record.hash, name: record.name, workspace: record.workspace });
+      const content = workspaceJSON(value);
+      if (new TextEncoder().encode(content).byteLength > MAX_WORKSPACE_BYTES) throw new Error("This workspace is too large to sync. Export its editable JSON to keep a copy.");
+      // Every retry rereads the winning branch tree and checks the workspace
+      // baseline before writing. Racing edits to the same workspace become a
+      // conflict; unrelated additions can safely share the new tree.
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const snapshot = await head(), entries = await treeAt(snapshot.treeId);
+        const remote = await workspaceAt(record, entries);
+        if (remote && workspaceJSON(remote) === content) return { status: "synced", remote };
+        if ((remote?.sha || null) !== expectedSha) return { status: "conflict", remote };
+        const original = entries.find((item) => item.path === `library/${record.hash}.json`);
+        if (!original) throw new Error("Upload the original PDF before syncing its workspace.");
+        await paperFromEntry(original, entries);
+        const tree = await request("/git/trees", { method: "POST", body: { base_tree: snapshot.treeId, tree: [
+          { path: `workspaces/${value.id}.json`, mode: "100644", type: "blob", content },
+        ] } });
+        const commit = await request("/git/commits", { method: "POST", body: { message: "Sync MegaApp PDF workspace", tree: sha(tree.sha), parents: [snapshot.commitId] } });
+        try {
+          await request(`/git/refs/heads/${encodeURIComponent(branch)}`, { method: "PATCH", body: { sha: sha(commit.sha), force: false } });
+          const confirmed = await workspaceAt(record, await treeAt((await head()).treeId));
+          if (!confirmed) throw new Error("GitHub did not confirm the workspace. Retry Sync to verify your saved work.");
+          return { status: workspaceJSON(confirmed) === content ? "synced" : "conflict", remote: confirmed };
+        } catch (error) {
+          if (![409, 422].includes(error.status) || attempt === 3) throw error;
+        }
+      }
     },
     async upload(record, onProgress = () => {}) {
       await validatePDF(record.blob);
