@@ -2,6 +2,8 @@ import { createCanvas } from "./canvas.js";
 import { createMarbleMusic } from "./marble.js";
 import { createPlatformer } from "./platformer.js";
 import { createIntro } from "./intro.js";
+import { createReading } from "./reading.js";
+import { createFilesDemo } from "./files-demo.js";
 import { validateScene } from "./marble-physics.js";
 import {
   createSampleStore,
@@ -83,6 +85,8 @@ const marble = createMarbleMusic({
 });
 const platformer = createPlatformer({ notify });
 platformer.setVisible(false);
+const files = createFilesDemo({ notify });
+const reading = createReading({ notify });
 const tabs = [...document.querySelectorAll("[data-panel]")];
 const results = new Map();
 function selectTab(tab, { route = true } = {}) {
@@ -96,6 +100,8 @@ function selectTab(tab, { route = true } = {}) {
   if (tab.dataset.panel === "canvas") drawing.resize();
   marble.setVisible(tab.dataset.panel === "marble");
   platformer.setVisible(tab.dataset.panel === "jump");
+  files.setVisible(tab.dataset.panel === "files");
+  reading.setVisible(tab.dataset.panel === "reading");
   if (tab.dataset.panel === "device") renderDevice();
   if (route)
     history.replaceState(

@@ -18,6 +18,8 @@
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./files-demo.css" />
+    <link rel="stylesheet" href="./reading.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -75,6 +77,21 @@
             <path d="m5 17 12-12 3 3-12 12-4 1Z M14 8l3 3" /></svg
           ><span>Canvas</span>
         </button>
+        <button
+          class="dock-button"
+          id="tab-files"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-files"
+          tabindex="-1"
+          data-panel="files"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 7h7l2 2h9v11H3Z M3 7V4h7l2 3" />
+            <path d="M8 14h8 M8 17h5" /></svg
+          ><span>Files</span>
+        </button>
+        <button class="dock-button" id="tab-reading" role="tab" aria-selected="false" aria-controls="panel-reading" tabindex="-1" data-panel="reading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5Z M14 3v5h5 M8 12h8 M8 16h6" /></svg><span>Reading</span></button>
         <button
           class="dock-button"
           id="tab-device"
@@ -479,6 +496,146 @@
             ><span>960 × 640</span>
           </footer>
         </section>
+        <section id="panel-reading" class="panel" role="tabpanel" aria-labelledby="tab-reading" hidden>
+          <header class="reading-heading"><div><h1>A place for papers.</h1><p>Bring a PDF. Keep a copy here. Let your library travel with you.</p></div><button id="reading-import" class="primary-button">Add PDF</button><input id="reading-file" type="file" accept="application/pdf,.pdf" hidden /></header>
+          <div class="reading-layout">
+            <aside class="reading-shelf" aria-label="PDF library">
+              <div class="reading-connection"><h2>Google Drive</h2><p id="reading-account" class="reading-account">Drive disconnected</p><button id="reading-connect" class="primary-button">Connect Google Drive</button><button id="reading-refresh" class="quiet-button" disabled>Refresh library</button><button id="reading-disconnect" class="quiet-button" hidden>Disconnect</button></div>
+              <h2>On this device</h2><p id="reading-cache-warning" role="status" hidden></p><p id="reading-count"></p><div id="reading-local-list" class="reading-local-list"></div>
+              <h2>In Google Drive</h2><div id="reading-cloud-list" class="reading-cloud-list"></div><p id="reading-cloud-empty">Connect the same Google account on each device to share your library.</p>
+              <details id="reading-setup" class="reading-setup"><summary>Connection setup</summary><p>MegaApp stays on GitHub Pages. Drive stores your PDF files. The public client ID identifies this app; it is not a secret.</p><label for="reading-client">Google OAuth client ID</label><input id="reading-client" type="text" autocomplete="off" spellcheck="false" placeholder="…apps.googleusercontent.com" /><p>Access is limited to files created or selected for this app. Sign-in tokens stay in this browser session.</p><a class="reading-guide" href="./reading/drive-guide.html" target="_blank" rel="noopener">Setup and storage guide</a></details>
+            </aside>
+            <article class="reading-viewer" aria-label="PDF reader"><header class="reading-viewer-heading"><h2 id="reading-title">Choose a paper</h2><button id="reading-upload" class="primary-button" disabled>Upload to Drive</button></header>
+              <div class="reading-toolbar"><output id="reading-page-label" aria-live="polite">Opening sample…</output><button id="reading-prev" class="quiet-button" aria-label="Previous page" disabled>‹</button><form id="reading-page-form"><label for="reading-page-input">Page</label><input id="reading-page-input" type="number" min="1" value="1" aria-label="Page number" /><button class="quiet-button" type="submit">Go</button></form><button id="reading-next" class="quiet-button" aria-label="Next page" disabled>›</button><button id="reading-zoom-out" class="quiet-button" aria-label="Zoom out" disabled>−</button><span id="reading-zoom-label">100%</span><button id="reading-zoom-in" class="quiet-button" aria-label="Zoom in" disabled>+</button><button id="reading-download" class="quiet-button" disabled>Save PDF</button></div>
+              <div id="reading-surface" class="reading-surface"><canvas id="reading-canvas" aria-label="Rendered PDF page"></canvas></div>
+              <p id="reading-status" class="reading-status" role="status">The sample is local. Connect Drive when you want to share PDFs between your devices.</p>
+              <details class="reading-text"><summary>Selectable page text</summary><pre id="reading-text"></pre></details>
+            </article>
+          </div>
+        </section>
+        <section
+          id="panel-files"
+          class="panel files-panel"
+          role="tabpanel"
+          aria-labelledby="tab-files"
+          hidden
+        >
+          <div class="panel-heading files-heading">
+            <div>
+              <h1>Files that travel with you.</h1>
+              <p>Work here. Keep an original in Drive. Take a copy anywhere.</p>
+            </div>
+            <button id="files-walkthrough" class="primary-button">Start walkthrough</button>
+          </div>
+          <div class="files-simulation-note">
+            <span class="files-simulation-badge">Interactive simulation</span>
+            <p>Try it safely. These Drive copies live in this browser; no Google account is connected.</p>
+          </div>
+          <p id="files-session-warning" class="files-warning" role="status" hidden>
+            Session only: this browser could not save files on this device. Export your work before closing this tab.
+          </p>
+          <div id="files-live-connection" class="files-live-connection" hidden>
+            <div><strong id="files-live-title">Google Drive connection</strong><p id="files-live-detail">Checking the private Drive connection…</p></div>
+            <div><button id="files-connect" class="primary-button" hidden>Connect for this session</button><button id="files-pick-drive" class="primary-button" hidden>Pick existing Drive file</button><button id="files-drive-refresh" class="quiet-button" hidden>Refresh Drive files</button><button id="files-disconnect" class="quiet-button" hidden>End Drive session</button></div>
+          </div>
+          <p id="files-picker-setup" class="files-warning" hidden>Choosing existing files needs the approved Google Picker setup: a restricted API key and the same Cloud project number. Local files remain available.</p>
+          <p id="files-upload-setup" class="files-warning" hidden>Drive uploads need the private server’s recovery storage configured first. You can still open chosen Drive files, edit locally, and export your copies.</p>
+          <div class="files-copy-map" aria-label="Where your file lives">
+            <article class="files-place files-place-device">
+              <div class="files-place-heading">
+                <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="5" width="24" height="17" rx="3"/><path d="M12 22v5m8-5v5M9 27h14"/></svg>
+                <h2>This device</h2>
+                <span id="files-device-state" class="files-place-state">Ready</span>
+              </div>
+              <div class="files-copy-sheet">
+                <strong id="files-device-name">Your working copy</strong>
+                <span id="files-device-detail">Open a file to keep it close.</span>
+              </div>
+              <p id="files-device-explanation">Edits stay on this device, even when you’re offline.</p>
+            </article>
+            <div id="files-bridge" class="files-bridge" aria-hidden="true">
+              <svg viewBox="0 0 100 32"><path d="M3 16h92m-9-8 9 8-9 8"/></svg>
+              <span id="files-bridge-label">Open · edit · save</span>
+            </div>
+            <article class="files-place files-place-drive">
+              <div class="files-place-heading">
+                <svg viewBox="0 0 32 32" aria-hidden="true"><path d="m12 4-9 16 5 8h18l4-8-9-16Z M12 4l9 16H3m5 8 5-8m17 0H13l8-16"/></svg>
+                <h2>Google Drive</h2>
+                <span id="files-drive-state" class="files-place-state">Simulation</span>
+              </div>
+              <div class="files-copy-sheet">
+                <strong id="files-drive-name">Your original</strong>
+                <span id="files-drive-detail">Save a file to make a Drive copy.</span>
+              </div>
+              <p id="files-drive-explanation">Opening checks the original for changes. Saving checks again.</p>
+            </article>
+          </div>
+          <div class="files-demo-controls" aria-label="Simulation controls">
+            <div class="files-network-state"><span id="files-network-dot" aria-hidden="true"></span><strong id="files-network-label">Simulated connection on</strong></div>
+            <div class="files-simulation-actions">
+              <button id="files-network" class="quiet-button" aria-pressed="false">Go offline</button>
+              <button id="files-external" class="quiet-button" disabled>Change Drive copy</button>
+              <button id="files-fail" class="quiet-button">Fail next upload</button>
+            </div>
+          </div>
+          <div id="files-guide" class="files-guide" role="status">
+            <span id="files-guide-title">See what happens to a file.</span>
+            <p id="files-guide-text">Start a walkthrough, or bring in a file of your own. The simulation never removes your work.</p>
+            <button id="files-guide-action" class="quiet-button" hidden></button>
+          </div>
+          <div class="files-workspace">
+            <aside class="files-library" aria-label="Files on this device">
+              <div class="files-library-heading"><h2>Your files</h2><span id="files-count">0</span></div>
+              <div class="files-library-actions">
+                <button id="files-new" class="quiet-button">New note</button>
+                <button id="files-import" class="quiet-button">Import file</button>
+                <input id="files-import-input" type="file" hidden />
+              </div>
+              <div id="files-list" class="files-list"></div>
+              <button id="files-large" class="files-large-button">Try a 12 MiB file <span>A sample you can open and export</span></button>
+              <p id="files-library-note" class="files-library-note">Files and earlier copies live outside the ordinary State values.</p>
+            </aside>
+            <div class="files-editor-area">
+              <div id="files-empty" class="files-empty">
+                <svg viewBox="0 0 80 90" aria-hidden="true"><path d="M16 6h31l17 17v58H16Z M47 6v17h17 M27 38h26m-26 10h26m-26 10h17"/></svg>
+                <h2>A file in two places.</h2>
+                <p>Open it, make a change, lose the connection.<br />Your work stays with you.</p>
+              </div>
+              <div id="files-editor-content" hidden>
+                <div class="files-editor-heading">
+                  <div><h2 id="files-editor-name"></h2><span id="files-editor-meta" class="files-editor-meta"></span></div>
+                  <span id="files-status" class="files-status" role="status"></span>
+                </div>
+                <div class="files-editor-toolbar">
+                  <button id="files-save" class="primary-button">Save to Drive</button>
+                  <button id="files-refresh" class="quiet-button">Refresh</button>
+                  <button id="files-export" class="quiet-button">Export all copies</button>
+                </div>
+                <p id="files-draft-status" class="files-draft-status" role="status"></p>
+                <div id="files-draft-recovery" class="files-recovery" hidden>
+                  <p>Your typing is still here, but this file changed elsewhere. Keep it as a new file or download it before opening another file.</p>
+                  <div><button id="files-recover" class="primary-button">Keep typing as a new file</button><button id="files-download-typing" class="quiet-button">Download typing</button></div>
+                </div>
+                <label id="files-text-label" class="files-text-label" for="files-editor">Working copy</label>
+                <textarea id="files-editor" class="files-editor" spellcheck="true" aria-describedby="files-draft-status"></textarea>
+                <div id="files-binary" class="files-binary" hidden><svg viewBox="0 0 48 56" aria-hidden="true"><path d="M8 4h21l11 11v37H8Z M29 4v11h11 M18 29l-5 5 5 5m12-10 5 5-5 5"/></svg><strong id="files-binary-name"></strong><p>This file is kept as its original bytes. You can save, refresh, and export it.</p></div>
+                <div id="files-conflict" class="files-conflict" hidden>
+                  <div class="files-conflict-title"><h3>Two changes. Both kept.</h3><span class="files-status" data-status="conflict">Needs your choice</span></div>
+                  <p id="files-conflict-description">Your working copy and the changed Drive original are safe. Compare them, then choose what to keep working on.</p>
+                  <div class="files-comparison"><div><h4>Your working copy</h4><pre id="files-local-preview"></pre></div><div><h4 id="files-remote-heading">Changed Drive copy</h4><pre id="files-remote-preview"></pre></div></div>
+                  <div class="files-conflict-actions"><button id="files-keep-both" class="primary-button">Keep both as files</button><button id="files-use-drive" class="quiet-button">Use Drive copy</button></div>
+                  <p class="files-conflict-footnote">Use Drive copy also keeps your local draft in earlier copies and in your export.</p>
+                </div>
+                <details id="files-history" class="files-history"><summary>Earlier copies <span id="files-history-count">0</span></summary><div id="files-history-list"></div></details>
+              </div>
+            </div>
+          </div>
+          <details class="files-setup">
+            <summary>How a real Drive connection will work</summary>
+            <p>A private server keeps credentials outside files, ordinary State values, exports, and browser source. Google will ask you to approve access only to files you choose or create with MegaApp.</p>
+            <p>Real setup needs your approval for the Google OAuth application and its redirect address. The first connection lasts for a server session. Persistent access would require a separate approval.</p>
+          </details>
+        </section>
         <section
           id="panel-device"
           class="panel document-panel"
@@ -653,6 +810,12 @@
       <div class="intro-blade" aria-hidden="true"></div>
     </div>
     <div id="toast" class="toast" role="status" hidden></div>
+    <dialog id="files-picker-dialog" class="files-picker-dialog" aria-labelledby="files-picker-title">
+      <h2 id="files-picker-title">Choose an existing Drive file</h2>
+      <p>Google’s chooser opens in a separate window. Choose one uploaded file to give MegaApp access to that file. Your current working copy stays safe here.</p>
+      <p id="files-picker-status" class="files-picker-status" role="status">The chooser is ready to open.</p>
+      <div class="files-picker-actions"><a id="files-picker-open" class="primary-button" target="_blank" rel="noopener noreferrer">Open Google chooser</a><button id="files-picker-cancel" class="quiet-button" type="button">Cancel</button></div>
+    </dialog>
     <dialog id="install-dialog" aria-labelledby="install-title">
       <form method="dialog">
         <button class="dialog-close quiet-button" aria-label="Close">

@@ -1,14 +1,52 @@
-const VERSION = "megaapp-shell-v9";
+const VERSION = "megaapp-shell-v13";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
+  "./files-demo.css",
+  "./reading.css",
+  "./src/reading.js",
+  "./src/reading-drive.js",
+  "./src/reading-library.js",
+  "./src/reading-config.js",
+  "./output/pdf/a-place-for-papers.pdf",
+  "./reading/drive-guide.html",
+  "./vendor/pdfjs/pdf.mjs",
+  "./vendor/pdfjs/pdf.worker.mjs",
+  "./vendor/pdfjs/standard_fonts/FoxitDingbats.pfb",
+  "./vendor/pdfjs/standard_fonts/FoxitFixed.pfb",
+  "./vendor/pdfjs/standard_fonts/FoxitFixedBold.pfb",
+  "./vendor/pdfjs/standard_fonts/FoxitFixedBoldItalic.pfb",
+  "./vendor/pdfjs/standard_fonts/FoxitFixedItalic.pfb",
+  "./vendor/pdfjs/standard_fonts/FoxitSerif.pfb",
+  "./vendor/pdfjs/standard_fonts/FoxitSerifBold.pfb",
+  "./vendor/pdfjs/standard_fonts/FoxitSerifBoldItalic.pfb",
+  "./vendor/pdfjs/standard_fonts/FoxitSerifItalic.pfb",
+  "./vendor/pdfjs/standard_fonts/FoxitSymbol.pfb",
+  "./vendor/pdfjs/standard_fonts/LiberationSans-Bold.ttf",
+  "./vendor/pdfjs/standard_fonts/LiberationSans-BoldItalic.ttf",
+  "./vendor/pdfjs/standard_fonts/LiberationSans-Italic.ttf",
+  "./vendor/pdfjs/standard_fonts/LiberationSans-Regular.ttf",
+  "./vendor/pdfjs/wasm/jbig2.wasm",
+  "./vendor/pdfjs/wasm/jbig2_nowasm_fallback.js",
+  "./vendor/pdfjs/wasm/openjpeg.wasm",
+  "./vendor/pdfjs/wasm/openjpeg_nowasm_fallback.js",
+  "./vendor/pdfjs/wasm/qcms_bg.wasm",
+  "./vendor/pdfjs/wasm/quickjs-eval.js",
+  "./vendor/pdfjs/wasm/quickjs-eval.wasm",
   "./favicon.svg",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/apple-touch-icon.png",
   "./src/app.js",
+  "./src/files-demo.js",
+  "./src/file-repository.js",
+  "./src/file-workspace.js",
+  "./src/file-export.js",
+  "./src/file-fingerprint.js",
+  "./src/mock-drive.js",
+  "./src/drive-adapter.js",
   "./src/intro.js",
   "./src/canvas.js",
   "./src/marble.js",
@@ -52,6 +90,11 @@ self.addEventListener("message", (event) => {
 self.addEventListener("fetch", (event) => {
   const requestUrl = new URL(event.request.url);
   requestUrl.hash = "";
+  // Storage mode is UI configuration; both modes use the same offline shell.
+  // Broker APIs and file bytes remain outside this exact asset allowlist.
+  if (event.request.mode === "navigate" &&
+      [new URL("./", self.location).pathname, new URL("./index.html", self.location).pathname].includes(requestUrl.pathname))
+    requestUrl.search = "";
   if (event.request.method !== "GET" || !urls.has(requestUrl.href)) return;
   event.respondWith(
     (async () => {
