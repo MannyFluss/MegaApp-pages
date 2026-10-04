@@ -18,8 +18,10 @@ import { registerAgentTools } from "./webmcp.js";
 import { storageName } from "./environment.js";
 import { createInputSystem } from "./input.js";
 import { createDesign } from "./design.js";
+import { createMoments } from "./moments.js";
 
 const $ = (id) => document.getElementById(id);
+let moments;
 const input = createInputSystem();
 let toastTimer, store;
 function notify(text) {
@@ -92,7 +94,7 @@ const platformer = createPlatformer({ notify });
 platformer.setVisible(false);
 const files = createFilesDemo({ notify });
 const reading = createReading({ notify, stateReady: storeReady, onRepositorySaved: () => { storeReady.then((value) => { store = value; renderState(); }); } });
-const design = createDesign({ input, notify, onSettings: async ({ response, settling }) => {
+const design = createDesign({ input, notify, onMoment: event => moments?.record(event), onSettings: async ({ response, settling }) => {
   store = await storeReady;
   await store.set("system.input.response", "number", response);
   await store.set("system.input.settling", "number", settling);
@@ -102,9 +104,9 @@ const design = createDesign({ input, notify, onSettings: async ({ response, sett
 const tabs = [...document.querySelectorAll("[data-panel]")];
 const results = new Map();
 const lastAppKey = storageName("megaapp.last-app.v1");
-let activePanel = "marble", meta, resumeAfterMeta;
+let activePanel = "marble", meta, resumeAfterMeta, resumeAfterMoment;
 function updateAppVisibility() {
-  const working = !meta?.isOpen();
+  const working = !meta?.isOpen() && !moments?.isOpen();
   marble.setVisible(working && activePanel === "marble");
   platformer.setVisible(working && activePanel === "jump");
   files.setVisible(activePanel === "files");
@@ -139,6 +141,7 @@ function selectTab(tab, { route = true, focus = route } = {}) {
   if (wasOpen) meta.close({ restoreFocus: false });
   if (focus || wasOpen) focusApp();
   if (route && !input.reduced) input.present($(`panel-${activePanel}`));
+  moments?.appChanged(activePanel);
 }
 function selectFromHash() {
   const tab = tabs.find((value) => `#${value.dataset.panel}` === location.hash);
@@ -181,6 +184,19 @@ meta = createMeta({
     }
   },
   focusApp,
+});
+moments = createMoments({ getApp: () => activePanel, getDesignContext: () => design.captureContext(), closeMeta: () => meta.close({ restoreFocus: false }), notify,
+  onOpenChange(open) {
+    if (open) resumeAfterMoment = { panel: activePanel, marble: $("marble-play").getAttribute("aria-pressed") === "true", jump: $("platformer-canvas").dataset.phase === "playing" };
+    updateAppVisibility();
+    if (!open) {
+      if (resumeAfterMoment?.panel === activePanel && !document.hidden) {
+        if (resumeAfterMoment.marble && activePanel === "marble") $("marble-play").click();
+        if (resumeAfterMoment.jump && activePanel === "jump" && $("platformer-canvas").dataset.phase === "paused") $("platformer-play").click();
+      }
+      resumeAfterMoment = null;
+    }
+  },
 });
 for (const tab of tabs) {
   tab.onclick = () => selectTab(tab);
