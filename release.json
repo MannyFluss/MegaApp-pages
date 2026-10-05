@@ -1,7 +1,7 @@
 {
   "version": 1,
   "environment": "live",
-  "sourceDigest": "74cc1bf81f13d29ad6349e87a812ec81bc52b897f9a3f45cd22ee0859c264a18",
+  "sourceDigest": "c1a2dc61229e66589a37bde173e7b5d393607cdbf15bbbc77569eaf6493ad67e",
   "files": [
     {
       "path": "docs/canvas-apis.md",
@@ -105,7 +105,7 @@
     },
     {
       "path": "src/context-toy.js",
-      "sha256": "00c9d85bc481a2b21308bfb0b1ec9fc66fe11499fcf866f9a2e7b1217100aa99"
+      "sha256": "61ae29686b4f3c875403622eaf4771662f8752fdfd31b48151cc3bddaa8f87fe"
     },
     {
       "path": "src/design-boundaries.js",
@@ -125,11 +125,11 @@
     },
     {
       "path": "src/design-markup.js",
-      "sha256": "ce5e65496d8e21e74ec097d96864e912af3e201645f8083ecd1c0edf486359d0"
+      "sha256": "2e91a303ec9cf666e29379408daf22bdaebf9799fd87056ff4b42a60238524de"
     },
     {
       "path": "src/design.js",
-      "sha256": "465ec5e328b78c5727ab3ee27c9f95bde026ef0d86d77915a4ecb921688a9824"
+      "sha256": "1091342ef1db879f347d9756521d194b321cfbf39e7433ea6b0031e11141a795"
     },
     {
       "path": "src/drive-adapter.js",
@@ -149,7 +149,7 @@
     },
     {
       "path": "src/file-export.js",
-      "sha256": "6ef354372f15f3f66a98ae96f3e34f2e07efedeefc5393514a6b57c05f5afe7d"
+      "sha256": "5e88a696bf026cacdfa9bc5617906db88035041134d61fd5a78a358375db1b6e"
     },
     {
       "path": "src/file-fingerprint.js",
@@ -192,16 +192,20 @@
       "sha256": "6693b9bc76f98d24f449c08a7605714b3bfd7184e63aee4598a9d079e47f2331"
     },
     {
+      "path": "src/moment-codec.js",
+      "sha256": "8e46d78be9de092eec87c6376bfcc727be774d5a3c1012aeb9e2881e29e4836d"
+    },
+    {
       "path": "src/moment-record.js",
-      "sha256": "787c1dba2195eee3917df06539e80ce8e1179e0551ecf24e9666c3b76f3dccde"
+      "sha256": "beff15f6416fbd97c8d442eb3a9eab830946cbb1a40dd7cf85452cccdc4d340c"
     },
     {
       "path": "src/moment-replay.js",
-      "sha256": "7350cec0cfbf0626d6051d6d4027e18e3b4278e9513ba33b5813fc99391cf084"
+      "sha256": "2d3cb37fd88d2cde903c440be66daf20b124dc87f2b763944ca73972d741c369"
     },
     {
       "path": "src/moments.js",
-      "sha256": "40f9e9c1eebfd4dfae5060371d13f7188beb63a98aaaf83e85f4117016d3fe16"
+      "sha256": "7817ca04b2b09cb041ef7447786260ed83629fb3313ce48b552ba62bd90b7f4d"
     },
     {
       "path": "src/page-markup.js",
@@ -265,7 +269,7 @@
     },
     {
       "path": "sw.js",
-      "sha256": "4642774433e921b5fa245b5cd40747d4329a3dec800298e88720b75be84a97ab"
+      "sha256": "b573899a064a4ee6f181029442d2d5cda94e256255eb6b67a3a8065934ec6b3b"
     },
     {
       "path": "vendor/pdfjs/LICENSE",
