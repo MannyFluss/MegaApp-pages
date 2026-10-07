@@ -4,6 +4,7 @@ import { createPlatformer } from "./platformer.js";
 import { createIntro } from "./intro.js";
 import { createMeta } from "./meta.js";
 import { createReading } from "./reading.js";
+import { readingPrefix } from "./reading-style.js";
 import { createFilesDemo } from "./files-demo.js";
 import { validateScene } from "./marble-physics.js";
 import {
@@ -19,6 +20,7 @@ import { storageName } from "./environment.js";
 import { createInputSystem } from "./input.js";
 import { createDesign } from "./design.js";
 import { createMoments } from "./moments.js";
+import { createTaste } from "./taste.js";
 
 const $ = (id) => document.getElementById(id);
 let moments;
@@ -46,6 +48,11 @@ const storeReady = rawStoreReady.then((raw) => ({
     if (name !== "apps.marble.scene") return raw.set(name, type, value);
     const scene = sceneFromRows([{ name, type, value }]);
     return marble.replaceSavedScene(scene, () => raw.set(name, type, scene));
+  },
+  setMany(values) {
+    return values.some(row => row.name === 'apps.marble.scene')
+      ? marble.replaceSavedScene(sceneFromRows(values), () => raw.setMany(values))
+      : raw.setMany(values);
   },
   remove(name) {
     return name === "apps.marble.scene"
@@ -101,6 +108,7 @@ const design = createDesign({ input, notify, onFeedback: () => moments?.keep({ f
   renderState();
   applyPreferences();
 } });
+const taste = createTaste({ notify, onMoment: event => moments?.record(event) });
 const tabs = [...document.querySelectorAll("[data-panel]")];
 const results = new Map();
 const lastAppKey = storageName("megaapp.last-app.v1");
@@ -112,6 +120,7 @@ function updateAppVisibility() {
   files.setVisible(activePanel === "files");
   reading.setVisible(working && activePanel === "reading");
   design.setVisible(working && activePanel === "design");
+  taste.setVisible(working && activePanel === "taste");
 }
 function focusApp() {
   const panel = $(`panel-${activePanel}`);
@@ -168,10 +177,15 @@ function renderDevice() {
 }
 meta = createMeta({
   input,
-  onReading: async enabled => {
-    store = await storeReady; await store.set('system.reading.emphasis', 'boolean', enabled); renderState(); applyPreferences();
-    moments?.record({ kind: 'action', app: activePanel, action: 'Set reading preference', outcome: `Word emphasis ${enabled ? 'on' : 'off'}`, context: activePanel === 'design' ? design.captureContext() : { app: activePanel, coverage: 'Declared reading preference only', reading: { wordEmphasis: enabled } } });
+  onReading: async (enabled, prefix) => {
+    store = await storeReady;
+    await store.setMany([{ name: 'system.reading.emphasis', type: 'boolean', value: enabled }, { name: 'system.reading.prefix', type: 'number', value: readingPrefix(prefix) }]); renderState(); applyPreferences();
+    moments?.record({ kind: 'action', app: activePanel, action: 'Set reading preference', outcome: `Word emphasis ${enabled ? `on, ${Math.round(readingPrefix(prefix) * 100)}% beginning` : 'off'}`, context: activePanel === 'design' ? design.captureContext() : { app: activePanel, coverage: 'Declared reading preference only', reading: { wordEmphasis: enabled, prefix: readingPrefix(prefix) } } });
     return store.mode !== 'session';
+  },
+  onReadingFont(info, action, result) {
+    applyPreferences();
+    if (action) moments?.record({ kind: 'action', app: activePanel, action: 'Set reading font', outcome: action === 'remove' ? `Removed device font${result?.persistent === false ? ' for this session; saved font could not be cleared' : ''}` : `${info?.enabled ? 'Using' : 'Paused'} ${info?.name || 'device font'}`, context: activePanel === 'design' ? design.captureContext() : { app: activePanel, coverage: 'Declared reading font metadata only', reading: { font: info } } });
   },
   onReach: async side => {
     store = await storeReady; await store.set("system.meta.side", "string", side); renderState(); applyPreferences();
@@ -265,7 +279,7 @@ function applyPreferences() {
   $("theme-toggle").setAttribute("aria-label", `Switch to ${nextTheme} theme`);
   $("theme-toggle").title = `Switch to ${nextTheme} theme`;
   input.configure(values);
-  design.applyReadingPreference(values['system.reading.emphasis']?.value === true);
+  design.applyReadingPreference(values['system.reading.emphasis']?.value === true, values['system.reading.prefix']?.value, meta?.readingFontInfo());
   meta?.configure(values);
   design.applySettings();
   drawing.applySettings(values);
